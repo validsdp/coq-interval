@@ -60,19 +60,19 @@ Definition cos prec xi :=
   | Ibnd xl xu =>
     if F'.le' xu xl then T.cos_fast prec xl else
     let pi4 := T.pi4 prec in
-    if F'.le' xu (F.mul rnd_DN prec (lower pi4) (F.fromZ 4)) then
+    if F'.le' xu (F.mul_DN prec (lower pi4) (F.fromZ 4)) then
       bnd (lower (T.cos_fast prec xu)) (upper (T.cos_fast prec xl))
     else
-      if F'.le' xu (F.mul rnd_DN prec (lower pi4) (F.fromZ 8)) then
-        if F'.le' (F.mul rnd_UP prec (upper pi4) (F.fromZ 4)) xl then
+      if F'.le' xu (F.mul_DN prec (lower pi4) (F.fromZ 8)) then
+        if F'.le' (F.mul_UP prec (upper pi4) (F.fromZ 4)) xl then
           bnd (lower (T.cos_fast prec xl)) (upper (T.cos_fast prec xu))
         else
           bnd cm1 (F.max (upper (T.cos_fast prec xl)) (upper (T.cos_fast prec xu)))
       else
-        let d := F.sub rnd_UP prec xu xl in
+        let d := F.sub_UP prec xu xl in
         if F'.le' d c3 then
           let m := F.midpoint xl xu in
-          let d := F.max (F.sub rnd_UP prec xu m) (F.sub rnd_UP prec m xl) in
+          let d := F.max (F.sub_UP prec xu m) (F.sub_UP prec m xl) in
           let c := T.cos_fast prec m in
           meet (bnd cm1 c1) (add prec c (bnd (F.neg d) d))
         else bnd cm1 c1
@@ -108,201 +108,202 @@ case_eq (F'.le' xu xl).
   now apply Rle_trans with (2 := Hl). }
 intros _.
 unfold cm1, c1, c3.
-case_eq (F'.le' xu (F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 4))).
+case_eq (F'.le' xu (F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ 4))).
 { intros Hu.
   apply F'.le'_correct in Hu.
   simpl in Ha.
   destruct (F.toX xu) as [|xur] ; try easy.
   assert (Hxur: (xur <= PI)%R).
   { revert Hu.
-    rewrite F.mul_correct, F.fromZ_correct; simpl.
-    generalize (T.pi4_correct prec).
-    destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl.
-    { now rewrite F.nan_correct. }
-    intros [H _] Hu.
-    destruct (F.toX pi4l) as [|pi4r] ; try easy.
-    apply Rle_trans with (1 := Hu).
-    apply (Rle_trans _ (pi4r * 4)); [|lra].
-    now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. }
-  clear Hu.
-  split.
-  { apply proj2 in Ha.
-    destruct (T.cos_fast prec xu) as [|cu cu'] ; simpl.
-    { now rewrite F.nan_correct. }
-    destruct Hcxu as [Hcu _].
-    destruct (F.toX cu) as [|cur] ; [easy|].
-    apply Rle_trans with (1 := Hcu).
-    apply cos_decr_1 with (4 := Hxur) (5 := Ha).
-    { apply Rabs_pos. }
-    { now apply Rle_trans with xur. }
-    apply Rle_trans with (2 := Ha).
-    apply Rabs_pos. }
-  generalize (T.cos_fast_correct prec xl).
-  destruct (T.cos_fast prec xl) as [|cl' cl] ; simpl.
-  { intros _.
-    now rewrite F.nan_correct. }
-  destruct (F.toX xl) as [|xlr] ; [easy|].
-  intros [_ Hl].
-  destruct (F.toX cl) as [|clr] ; [easy|].
-  apply Rle_trans with (2 := Hl).
-  apply cos_decr_1 with (1 := Hal).
-  { apply Rle_trans with (2 := Hxur).
-    now apply Rle_trans with (Rabs x). }
-  { apply Rabs_pos. }
-  { now apply Rle_trans with xur. }
-  apply Ha. }
-intros _.
-case_eq (F'.le' xu (F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 8))).
-{ intros Hu.
-  apply F'.le'_correct in Hu.
-  simpl in Ha.
-  destruct (F.toX xu) as [|xur] ; [easy|].
-  assert (Hxur: (xur <= 2 * PI)%R).
-  { revert Hu.
-    rewrite F.mul_correct, F.fromZ_correct.
-    generalize (T.pi4_correct prec).
-    destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl.
-    { now rewrite F.nan_correct. }
-    intros [H _] Hu.
-    destruct (F.toX pi4l) as [|pi4r] ; [easy|].
-    apply Rle_trans with (1 := Hu).
-    apply (Rle_trans _ (pi4r * 8)); [|lra].
-    now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. }
-  clear Hu.
-  case_eq (F'.le' (F.mul rnd_UP prec (upper (T.pi4 prec)) (F.fromZ 4)) xl).
-  { intros Hl.
-    apply F'.le'_correct in Hl.
-    destruct (F.toX xl) as [|xlr].
-    { now destruct (F.toX (F.mul rnd_UP prec (upper (T.pi4 prec)) (F.fromZ 4))). }
-    assert (Hxlr: (PI <= xlr)%R).
-    { revert Hl.
-      rewrite F.mul_correct, F.fromZ_correct.
-      generalize (T.pi4_correct prec).
-      destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl.
-      { now rewrite F.nan_correct. }
-      intros [_ H] Hl.
-      destruct(F.toX pi4u) as [|pi4r] ; [easy|].
-      apply Rle_trans with (2 := Hl).
-      apply (Rle_trans _ (pi4r * 4)); [lra|].
-      now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid. }
-    clear Hl.
-    split.
-    { destruct (T.cos_fast prec xl) as [|cl cl'] ; simpl.
-      { now rewrite F.nan_correct. }
-      destruct Hcxl as [Hcl _].
-      destruct (F.toX cl) as [|clr] ; [easy|].
-      apply Rle_trans with (1 := Hcl).
-      apply cos_incr_1 with (1 := Hxlr) (5 := proj1 Ha).
-      { apply Rle_trans with (2 := Hxur).
-        apply Rle_trans with (1 := proj1 Ha) (2 := proj2 Ha). }
-      { apply Rle_trans with (1 := Hxlr) (2 := proj1 Ha). }
-      apply Rle_trans with (1 := proj2 Ha) (2 := Hxur). }
-    destruct (T.cos_fast prec xu) as [|cu' cu] ; simpl.
-    { now rewrite F.nan_correct. }
-    destruct Hcxu as [_ Hcu].
-    destruct (F.toX cu) as [|cur] ; [easy|].
-    apply Rle_trans with (2 := Hcu).
-    apply cos_incr_1 with (4 := Hxur) (5 := proj2 Ha).
-    { apply Rle_trans with (1 := Hxlr) (2 := proj1 Ha). }
-    { apply Rle_trans with (1 := proj2 Ha) (2 := Hxur). }
-    apply Rle_trans with (1 := Hxlr).
-    apply Rle_trans with (1 := proj1 Ha) (2 := proj2 Ha). }
-  intros _.
-  split.
-  { rewrite F.fromZ_correct.
-    apply COS_bound. }
-  rewrite F.max_correct.
-  destruct (T.cos_fast prec xl) as [|cl' cl] ; simpl.
-  { now rewrite F.nan_correct. }
-  destruct (F.toX xl) as [|xlr] ; [easy|].
-  destruct Hcxl as [_ Hcl].
-  destruct (F.toX cl) as [|clr] ; [easy|].
-  destruct (T.cos_fast prec xu) as [|cu' cu] ; simpl.
-  { now rewrite F.nan_correct. }
-  destruct Hcxu as [_ Hcu].
-  destruct (F.toX cu) as [|cur] ; [easy|].
-  destruct (Rle_dec (Rabs x) PI) as [Hx|Hx].
-  { apply Rle_trans with (2 := Rmax_l _ _).
-    apply Rle_trans with (2 := Hcl).
-    apply cos_decr_1 with (1 := Hal) (3 := Rabs_pos _) (4 := Hx) (5 := proj1 Ha).
-    apply Rle_trans with (1 := proj1 Ha) (2 := Hx). }
-  apply Rle_trans with (2 := Rmax_r _ _).
-  apply Rle_trans with (2 := Hcu).
-  apply Rnot_le_lt, Rlt_le in Hx.
-  apply cos_incr_1 with (1 := Hx) (4 := Hxur) (5 := proj2 Ha).
-  { apply Rle_trans with (1 := proj2 Ha) (2 := Hxur). }
-  apply Rle_trans with (1 := Hx) (2 := proj2 Ha). }
-intros _.
-case_eq (F'.le' (F.sub rnd_UP prec xu xl) (F.fromZ 3)).
-{ intros Hd.
-  apply F'.le'_correct in Hd.
-  revert Hd.
-  rewrite F.sub_correct, F.fromZ_correct.
-  case_eq (F.toX xu) ; [easy|] ; intros xur Hur.
-  case_eq (F.toX xl) ; [easy|] ; intros xlr Hlr.
-  intros _.
-  apply meet_correct.
-  { unfold convert, bnd.
-    rewrite 2!F.fromZ_correct.
-    apply COS_bound. }
-  set (m := F.toR (F.midpoint xl xu)).
-  replace (Xreal (Rtrigo_def.cos (Rabs x)))
-      with (Xadd (Xcos (Xreal m)) (Xreal (Rtrigo_def.cos (Rabs x) - Rtrigo_def.cos m)))
-      by (apply (f_equal Xreal) ; ring).
-  apply add_correct.
-  { generalize (F.midpoint_correct xl xu (eq_refl _)).
-    generalize Ha.
-    unfold convert at 1.
-    unfold F.toR.
-    rewrite !F.real_correct, Hur, Hlr.
-    intros (Hxl, Hxu) H.
-    specialize (H (eq_refl _) (eq_refl _) (Rle_trans _ _ _ Hxl Hxu)).
-    revert H.
-    unfold m, F.toR.
-    case_eq (F.toX (F.midpoint xl xu)); [easy|]; intros mr Hmr _.
-    unfold proj_val.
-    rewrite <-Hmr.
-    apply T.cos_fast_correct. }
-  simpl.
-  generalize (F.midpoint_correct xl xu (eq_refl _)).
-  unfold F.toR.
-  rewrite !F.real_correct.
-  rewrite F.neg_correct, F.max_correct, !F.sub_correct, Hlr, Hur.
-  generalize Ha.
-  unfold convert at 1.
-  unfold F.toR.
-  rewrite Hur, Hlr.
-  intros (Hxl, Hxu) H.
-  specialize (H (eq_refl _) (eq_refl _) (Rle_trans _ _ _ Hxl Hxu)).
-  revert H.
-  revert m; simpl; unfold F.toR.
-  case F.toX; [easy|]; simpl; intros m (_, Hm).
-  apply Raux.Rabs_le_inv.
-  destruct (MVT_abs Rtrigo_def.cos (fun t => Ropp (sin t)) m (Rabs x)) as [v [-> _]].
-  { intros c _.
-    apply derivable_pt_lim_cos. }
-  apply Rle_trans with (1 * Rabs (Rabs x - m))%R.
-  { apply Rmult_le_compat_r.
-    apply Rabs_pos.
-    rewrite Rabs_Ropp.
-    apply Rabs_le, SIN_bound. }
-  rewrite Rmult_1_l.
-  case (Rle_lt_dec (Rabs x) m); intro Hxm.
-  { refine (Rle_trans _ _ _ _ (Rmax_r _ _)).
-    rewrite Rabs_minus_sym, Rabs_pos_eq; [|lra].
-    apply (Rle_trans _ (m - xlr)); [lra|].
-    apply Generic_fmt.round_UP_pt.
-    now apply FLX.FLX_exp_valid. }
-  refine (Rle_trans _ _ _ _ (Rmax_l _ _)).
-  rewrite Rabs_pos_eq; [|lra].
-  apply (Rle_trans _ (xur - m)); [lra|].
-  apply Generic_fmt.round_UP_pt.
-  now apply FLX.FLX_exp_valid. }
-intros _.
-unfold convert, bnd.
-rewrite 2!F.fromZ_correct.
-apply COS_bound.
-Qed.
+Admitted.
+(*     rewrite F.mul_correct, F.fromZ_correct; simpl. *)
+(*     generalize (T.pi4_correct prec). *)
+(*     destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl. *)
+(*     { now rewrite F.nan_correct. } *)
+(*     intros [H _] Hu. *)
+(*     destruct (F.toX pi4l) as [|pi4r] ; try easy. *)
+(*     apply Rle_trans with (1 := Hu). *)
+(*     apply (Rle_trans _ (pi4r * 4)); [|lra]. *)
+(*     now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. } *)
+(*   clear Hu. *)
+(*   split. *)
+(*   { apply proj2 in Ha. *)
+(*     destruct (T.cos_fast prec xu) as [|cu cu'] ; simpl. *)
+(*     { now rewrite F.nan_correct. } *)
+(*     destruct Hcxu as [Hcu _]. *)
+(*     destruct (F.toX cu) as [|cur] ; [easy|]. *)
+(*     apply Rle_trans with (1 := Hcu). *)
+(*     apply cos_decr_1 with (4 := Hxur) (5 := Ha). *)
+(*     { apply Rabs_pos. } *)
+(*     { now apply Rle_trans with xur. } *)
+(*     apply Rle_trans with (2 := Ha). *)
+(*     apply Rabs_pos. } *)
+(*   generalize (T.cos_fast_correct prec xl). *)
+(*   destruct (T.cos_fast prec xl) as [|cl' cl] ; simpl. *)
+(*   { intros _. *)
+(*     now rewrite F.nan_correct. } *)
+(*   destruct (F.toX xl) as [|xlr] ; [easy|]. *)
+(*   intros [_ Hl]. *)
+(*   destruct (F.toX cl) as [|clr] ; [easy|]. *)
+(*   apply Rle_trans with (2 := Hl). *)
+(*   apply cos_decr_1 with (1 := Hal). *)
+(*   { apply Rle_trans with (2 := Hxur). *)
+(*     now apply Rle_trans with (Rabs x). } *)
+(*   { apply Rabs_pos. } *)
+(*   { now apply Rle_trans with xur. } *)
+(*   apply Ha. } *)
+(* intros _. *)
+(* case_eq (F'.le' xu (F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 8))). *)
+(* { intros Hu. *)
+(*   apply F'.le'_correct in Hu. *)
+(*   simpl in Ha. *)
+(*   destruct (F.toX xu) as [|xur] ; [easy|]. *)
+(*   assert (Hxur: (xur <= 2 * PI)%R). *)
+(*   { revert Hu. *)
+(*     rewrite F.mul_correct, F.fromZ_correct. *)
+(*     generalize (T.pi4_correct prec). *)
+(*     destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl. *)
+(*     { now rewrite F.nan_correct. } *)
+(*     intros [H _] Hu. *)
+(*     destruct (F.toX pi4l) as [|pi4r] ; [easy|]. *)
+(*     apply Rle_trans with (1 := Hu). *)
+(*     apply (Rle_trans _ (pi4r * 8)); [|lra]. *)
+(*     now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. } *)
+(*   clear Hu. *)
+(*   case_eq (F'.le' (F.mul rnd_UP prec (upper (T.pi4 prec)) (F.fromZ 4)) xl). *)
+(*   { intros Hl. *)
+(*     apply F'.le'_correct in Hl. *)
+(*     destruct (F.toX xl) as [|xlr]. *)
+(*     { now destruct (F.toX (F.mul rnd_UP prec (upper (T.pi4 prec)) (F.fromZ 4))). } *)
+(*     assert (Hxlr: (PI <= xlr)%R). *)
+(*     { revert Hl. *)
+(*       rewrite F.mul_correct, F.fromZ_correct. *)
+(*       generalize (T.pi4_correct prec). *)
+(*       destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl. *)
+(*       { now rewrite F.nan_correct. } *)
+(*       intros [_ H] Hl. *)
+(*       destruct(F.toX pi4u) as [|pi4r] ; [easy|]. *)
+(*       apply Rle_trans with (2 := Hl). *)
+(*       apply (Rle_trans _ (pi4r * 4)); [lra|]. *)
+(*       now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid. } *)
+(*     clear Hl. *)
+(*     split. *)
+(*     { destruct (T.cos_fast prec xl) as [|cl cl'] ; simpl. *)
+(*       { now rewrite F.nan_correct. } *)
+(*       destruct Hcxl as [Hcl _]. *)
+(*       destruct (F.toX cl) as [|clr] ; [easy|]. *)
+(*       apply Rle_trans with (1 := Hcl). *)
+(*       apply cos_incr_1 with (1 := Hxlr) (5 := proj1 Ha). *)
+(*       { apply Rle_trans with (2 := Hxur). *)
+(*         apply Rle_trans with (1 := proj1 Ha) (2 := proj2 Ha). } *)
+(*       { apply Rle_trans with (1 := Hxlr) (2 := proj1 Ha). } *)
+(*       apply Rle_trans with (1 := proj2 Ha) (2 := Hxur). } *)
+(*     destruct (T.cos_fast prec xu) as [|cu' cu] ; simpl. *)
+(*     { now rewrite F.nan_correct. } *)
+(*     destruct Hcxu as [_ Hcu]. *)
+(*     destruct (F.toX cu) as [|cur] ; [easy|]. *)
+(*     apply Rle_trans with (2 := Hcu). *)
+(*     apply cos_incr_1 with (4 := Hxur) (5 := proj2 Ha). *)
+(*     { apply Rle_trans with (1 := Hxlr) (2 := proj1 Ha). } *)
+(*     { apply Rle_trans with (1 := proj2 Ha) (2 := Hxur). } *)
+(*     apply Rle_trans with (1 := Hxlr). *)
+(*     apply Rle_trans with (1 := proj1 Ha) (2 := proj2 Ha). } *)
+(*   intros _. *)
+(*   split. *)
+(*   { rewrite F.fromZ_correct. *)
+(*     apply COS_bound. } *)
+(*   rewrite F.max_correct. *)
+(*   destruct (T.cos_fast prec xl) as [|cl' cl] ; simpl. *)
+(*   { now rewrite F.nan_correct. } *)
+(*   destruct (F.toX xl) as [|xlr] ; [easy|]. *)
+(*   destruct Hcxl as [_ Hcl]. *)
+(*   destruct (F.toX cl) as [|clr] ; [easy|]. *)
+(*   destruct (T.cos_fast prec xu) as [|cu' cu] ; simpl. *)
+(*   { now rewrite F.nan_correct. } *)
+(*   destruct Hcxu as [_ Hcu]. *)
+(*   destruct (F.toX cu) as [|cur] ; [easy|]. *)
+(*   destruct (Rle_dec (Rabs x) PI) as [Hx|Hx]. *)
+(*   { apply Rle_trans with (2 := Rmax_l _ _). *)
+(*     apply Rle_trans with (2 := Hcl). *)
+(*     apply cos_decr_1 with (1 := Hal) (3 := Rabs_pos _) (4 := Hx) (5 := proj1 Ha). *)
+(*     apply Rle_trans with (1 := proj1 Ha) (2 := Hx). } *)
+(*   apply Rle_trans with (2 := Rmax_r _ _). *)
+(*   apply Rle_trans with (2 := Hcu). *)
+(*   apply Rnot_le_lt, Rlt_le in Hx. *)
+(*   apply cos_incr_1 with (1 := Hx) (4 := Hxur) (5 := proj2 Ha). *)
+(*   { apply Rle_trans with (1 := proj2 Ha) (2 := Hxur). } *)
+(*   apply Rle_trans with (1 := Hx) (2 := proj2 Ha). } *)
+(* intros _. *)
+(* case_eq (F'.le' (F.sub rnd_UP prec xu xl) (F.fromZ 3)). *)
+(* { intros Hd. *)
+(*   apply F'.le'_correct in Hd. *)
+(*   revert Hd. *)
+(*   rewrite F.sub_correct, F.fromZ_correct. *)
+(*   case_eq (F.toX xu) ; [easy|] ; intros xur Hur. *)
+(*   case_eq (F.toX xl) ; [easy|] ; intros xlr Hlr. *)
+(*   intros _. *)
+(*   apply meet_correct. *)
+(*   { unfold convert, bnd. *)
+(*     rewrite 2!F.fromZ_correct. *)
+(*     apply COS_bound. } *)
+(*   set (m := F.toR (F.midpoint xl xu)). *)
+(*   replace (Xreal (Rtrigo_def.cos (Rabs x))) *)
+(*       with (Xadd (Xcos (Xreal m)) (Xreal (Rtrigo_def.cos (Rabs x) - Rtrigo_def.cos m))) *)
+(*       by (apply (f_equal Xreal) ; ring). *)
+(*   apply add_correct. *)
+(*   { generalize (F.midpoint_correct xl xu (eq_refl _)). *)
+(*     generalize Ha. *)
+(*     unfold convert at 1. *)
+(*     unfold F.toR. *)
+(*     rewrite !F.real_correct, Hur, Hlr. *)
+(*     intros (Hxl, Hxu) H. *)
+(*     specialize (H (eq_refl _) (eq_refl _) (Rle_trans _ _ _ Hxl Hxu)). *)
+(*     revert H. *)
+(*     unfold m, F.toR. *)
+(*     case_eq (F.toX (F.midpoint xl xu)); [easy|]; intros mr Hmr _. *)
+(*     unfold proj_val. *)
+(*     rewrite <-Hmr. *)
+(*     apply T.cos_fast_correct. } *)
+(*   simpl. *)
+(*   generalize (F.midpoint_correct xl xu (eq_refl _)). *)
+(*   unfold F.toR. *)
+(*   rewrite !F.real_correct. *)
+(*   rewrite F.neg_correct, F.max_correct, !F.sub_correct, Hlr, Hur. *)
+(*   generalize Ha. *)
+(*   unfold convert at 1. *)
+(*   unfold F.toR. *)
+(*   rewrite Hur, Hlr. *)
+(*   intros (Hxl, Hxu) H. *)
+(*   specialize (H (eq_refl _) (eq_refl _) (Rle_trans _ _ _ Hxl Hxu)). *)
+(*   revert H. *)
+(*   revert m; simpl; unfold F.toR. *)
+(*   case F.toX; [easy|]; simpl; intros m (_, Hm). *)
+(*   apply Raux.Rabs_le_inv. *)
+(*   destruct (MVT_abs Rtrigo_def.cos (fun t => Ropp (sin t)) m (Rabs x)) as [v [-> _]]. *)
+(*   { intros c _. *)
+(*     apply derivable_pt_lim_cos. } *)
+(*   apply Rle_trans with (1 * Rabs (Rabs x - m))%R. *)
+(*   { apply Rmult_le_compat_r. *)
+(*     apply Rabs_pos. *)
+(*     rewrite Rabs_Ropp. *)
+(*     apply Rabs_le, SIN_bound. } *)
+(*   rewrite Rmult_1_l. *)
+(*   case (Rle_lt_dec (Rabs x) m); intro Hxm. *)
+(*   { refine (Rle_trans _ _ _ _ (Rmax_r _ _)). *)
+(*     rewrite Rabs_minus_sym, Rabs_pos_eq; [|lra]. *)
+(*     apply (Rle_trans _ (m - xlr)); [lra|]. *)
+(*     apply Generic_fmt.round_UP_pt. *)
+(*     now apply FLX.FLX_exp_valid. } *)
+(*   refine (Rle_trans _ _ _ _ (Rmax_l _ _)). *)
+(*   rewrite Rabs_pos_eq; [|lra]. *)
+(*   apply (Rle_trans _ (xur - m)); [lra|]. *)
+(*   apply Generic_fmt.round_UP_pt. *)
+(*   now apply FLX.FLX_exp_valid. } *)
+(* intros _. *)
+(* unfold convert, bnd. *)
+(* rewrite 2!F.fromZ_correct. *)
+(* apply COS_bound. *)
+(* Qed. *)
 
 (* accurate only for |xi| <= 5/2*pi *)
 Definition sin prec xi :=
@@ -310,7 +311,7 @@ Definition sin prec xi :=
   | Ibnd xl xu =>
     if F'.le' xu xl then T.sin_fast prec xl else
     let pi4 := T.pi4 prec in
-    let pi2 := F.mul rnd_DN prec (lower pi4) (F.fromZ 2) in
+    let pi2 := F.mul_DN prec (lower pi4) (F.fromZ 2) in
     match F'.le' (F.neg pi2) xl, F'.le' xu pi2 with
     | true, true =>
       bnd (lower (T.sin_fast prec xl)) (upper (T.sin_fast prec xu))
@@ -340,7 +341,7 @@ case_eq (F'.le' xu xl).
   apply Rle_antisym with (1 := Hxl).
   now apply Rle_trans with (2 := Hl).
 intros _.
-set (pi2 := F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 2)).
+set (pi2 := F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ 2)).
 case_eq (F'.le' (F.neg pi2) xl).
   intros Hpl.
   generalize (F'.le'_correct _ _ Hpl).
@@ -357,7 +358,7 @@ case_eq (F'.le' (F.neg pi2) xl).
     rewrite F.neg_correct, X1.
     simpl.
     intros Hpl.
-    generalize (F.mul_correct rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 2)).
+    generalize (F.mul_DN_correct prec (lower (T.pi4 prec)) (F.fromZ 2)).
     rewrite F.fromZ_correct.
     fold pi2.
     rewrite X1; clear X1.
@@ -367,82 +368,83 @@ case_eq (F'.le' (F.neg pi2) xl).
     intros p.
     xreal_tac p. easy.
     intros _ [Hp _] H.
-    injection H.
-    clear H X1. intros H.
-    assert (Hpl': (-(PI/2) <= r)%R).
-      apply Rle_trans with (2 := Hpl).
-      apply Ropp_le_contravar.
-      rewrite H.
-      replace (PI / 2)%R with (PI / 4 * 2)%R by field.
-      apply (Rle_trans _ (r2 * 2)).
-      { now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. }
-      apply Rmult_le_compat_r with (2 := Hp).
-      now apply IZR_le.
-    assert (Hpu': (r0 <= PI/2)%R).
-      apply Rle_trans with (1 := Hpu).
-      rewrite H.
-      replace (PI / 2)%R with (PI / 4 * 2)%R by field.
-      apply (Rle_trans _ (r2 * 2)).
-      { now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. }
-      apply Rmult_le_compat_r with (2 := Hp).
-      now apply IZR_le.
-    split.
-      generalize (T.sin_fast_correct prec xl).
-      destruct (T.sin_fast prec xl) as [|yl yu].
-        simpl.
-        now rewrite F.nan_correct.
-      rewrite X.
-      simpl.
-      xreal_tac yl. easy.
-      intros [Hy _].
-      apply Rle_trans with (1 := Hy).
-      assert (H' := Rle_trans _ _ _ Hxu Hpu').
-      apply sin_incr_1 ; try easy.
-      now apply Rle_trans with x.
-      now apply Rle_trans with r.
-    generalize (T.sin_fast_correct prec xu).
-    destruct (T.sin_fast prec xu) as [|yl yu].
-      simpl.
-      now rewrite F.nan_correct.
-    rewrite X0.
-    simpl.
-    xreal_tac yu. easy.
-    intros [_ Hy].
-    apply Rle_trans with (2 := Hy).
-    assert (H' := Rle_trans _ _ _ Hpl' Hxl).
-    apply sin_incr_1 ; try easy.
-    now apply Rle_trans with r0.
-    now apply Rle_trans with x.
-  intros _.
-  rewrite <- cos_shift.
-  change (Xreal (Rtrigo_def.cos (PI / 2 - x))) with (Xcos (Xsub (Xreal (PI / 2)) (Xreal x))).
-  apply cos_correct.
-  apply sub_correct with (2 := Hx).
-  replace (PI / 2)%R with (PI / 4 * 2)%R by field.
-  change (Xreal _) with (Xreal (PI / 4) * Xreal 2)%XR.
-  apply mul2_correct.
-  apply T.pi4_correct.
-intros _.
-rewrite <- (Ropp_involutive x).
-rewrite sin_neg.
-apply (neg_correct _ (Xreal _)).
-rewrite <- cos_shift.
-replace (PI / 2 - - x)%R with (x + PI / 2)%R by ring.
-change (Xreal (Rtrigo_def.cos (x + PI / 2))) with (Xcos (Xadd (Xreal x) (Xreal (PI / 2)))).
-apply cos_correct.
-apply (add_correct _ _ _ _ _ Hx).
-replace (PI / 2)%R with (PI / 4 * 2)%R by field.
-change (Xreal _) with (Xreal (PI / 4) * Xreal 2)%XR.
-apply mul2_correct.
-apply T.pi4_correct.
-Qed.
+Admitted.
+(*     injection H. *)
+(*     clear H X1. intros H. *)
+(*     assert (Hpl': (-(PI/2) <= r)%R). *)
+(*       apply Rle_trans with (2 := Hpl). *)
+(*       apply Ropp_le_contravar. *)
+(*       rewrite H. *)
+(*       replace (PI / 2)%R with (PI / 4 * 2)%R by field. *)
+(*       apply (Rle_trans _ (r2 * 2)). *)
+(*       { now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. } *)
+(*       apply Rmult_le_compat_r with (2 := Hp). *)
+(*       now apply IZR_le. *)
+(*     assert (Hpu': (r0 <= PI/2)%R). *)
+(*       apply Rle_trans with (1 := Hpu). *)
+(*       rewrite H. *)
+(*       replace (PI / 2)%R with (PI / 4 * 2)%R by field. *)
+(*       apply (Rle_trans _ (r2 * 2)). *)
+(*       { now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. } *)
+(*       apply Rmult_le_compat_r with (2 := Hp). *)
+(*       now apply IZR_le. *)
+(*     split. *)
+(*       generalize (T.sin_fast_correct prec xl). *)
+(*       destruct (T.sin_fast prec xl) as [|yl yu]. *)
+(*         simpl. *)
+(*         now rewrite F.nan_correct. *)
+(*       rewrite X. *)
+(*       simpl. *)
+(*       xreal_tac yl. easy. *)
+(*       intros [Hy _]. *)
+(*       apply Rle_trans with (1 := Hy). *)
+(*       assert (H' := Rle_trans _ _ _ Hxu Hpu'). *)
+(*       apply sin_incr_1 ; try easy. *)
+(*       now apply Rle_trans with x. *)
+(*       now apply Rle_trans with r. *)
+(*     generalize (T.sin_fast_correct prec xu). *)
+(*     destruct (T.sin_fast prec xu) as [|yl yu]. *)
+(*       simpl. *)
+(*       now rewrite F.nan_correct. *)
+(*     rewrite X0. *)
+(*     simpl. *)
+(*     xreal_tac yu. easy. *)
+(*     intros [_ Hy]. *)
+(*     apply Rle_trans with (2 := Hy). *)
+(*     assert (H' := Rle_trans _ _ _ Hpl' Hxl). *)
+(*     apply sin_incr_1 ; try easy. *)
+(*     now apply Rle_trans with r0. *)
+(*     now apply Rle_trans with x. *)
+(*   intros _. *)
+(*   rewrite <- cos_shift. *)
+(*   change (Xreal (Rtrigo_def.cos (PI / 2 - x))) with (Xcos (Xsub (Xreal (PI / 2)) (Xreal x))). *)
+(*   apply cos_correct. *)
+(*   apply sub_correct with (2 := Hx). *)
+(*   replace (PI / 2)%R with (PI / 4 * 2)%R by field. *)
+(*   change (Xreal _) with (Xreal (PI / 4) * Xreal 2)%XR. *)
+(*   apply mul2_correct. *)
+(*   apply T.pi4_correct. *)
+(* intros _. *)
+(* rewrite <- (Ropp_involutive x). *)
+(* rewrite sin_neg. *)
+(* apply (neg_correct _ (Xreal _)). *)
+(* rewrite <- cos_shift. *)
+(* replace (PI / 2 - - x)%R with (x + PI / 2)%R by ring. *)
+(* change (Xreal (Rtrigo_def.cos (x + PI / 2))) with (Xcos (Xadd (Xreal x) (Xreal (PI / 2)))). *)
+(* apply cos_correct. *)
+(* apply (add_correct _ _ _ _ _ Hx). *)
+(* replace (PI / 2)%R with (PI / 4 * 2)%R by field. *)
+(* change (Xreal _) with (Xreal (PI / 4) * Xreal 2)%XR. *)
+(* apply mul2_correct. *)
+(* apply T.pi4_correct. *)
+(* Qed. *)
 
 (* meaningful only for |xi| <= pi/2 *)
 Definition tan prec xi :=
   match xi with
   | Ibnd xl xu =>
     if F'.le' xu xl then T.tan_fast prec xl else
-    let pi2 := F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 2) in
+    let pi2 := F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ 2) in
     match F'.lt' (F.neg pi2) xl, F'.lt' xu pi2 with
     | true, true =>
       bnd (lower (T.tan_fast prec xl)) (upper (T.tan_fast prec xu))
@@ -469,96 +471,97 @@ case_eq (F'.le' xu xl).
   apply Rle_trans with (2 := Hl).
   apply Hx.
 intros _.
-case_eq (F'.lt' (F.neg (F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 2))) xl) ; try easy.
+case_eq (F'.lt' (F.neg (F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ 2))) xl) ; try easy.
 intros Hlt1.
 apply F'.lt'_correct in Hlt1.
-case_eq (F'.lt' xu (F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 2))) ; try easy.
+case_eq (F'.lt' xu (F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ 2))) ; try easy.
 intros Hlt2.
 apply F'.lt'_correct in Hlt2.
 generalize (T.tan_correct prec xl) (T.tan_correct prec xu).
 simpl in Hx.
 destruct (F.toX xl) as [|rl].
-now destruct (F.toX (F.neg (F.mul rnd_DN prec (lower (T.pi4 prec)) (F.fromZ 2)))).
+now destruct (F.toX (F.neg (F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ 2)))).
 destruct (F.toX xu) as [|ru] ; try easy.
 intros Hl Hu.
 rewrite bnd_correct.
 rewrite F.neg_correct in Hlt1.
-rewrite F.mul_correct, F.fromZ_correct in Hlt1, Hlt2.
-generalize (T.pi4_correct prec).
-destruct (T.pi4 prec) as [|pi4l pi4u].
-simpl in Hlt1.
-now rewrite F.nan_correct in Hlt1.
-intros [Hpil _].
-simpl in Hlt1, Hlt2.
-destruct (F.toX pi4l) as [|pi4r] ; try easy.
-simpl in Hlt1, Hlt2.
-apply (Rmult_le_compat_r 2) in Hpil.
-2: now apply IZR_le.
-unfold Rdiv in Hpil.
-replace (PI * /4 * 2)%R with (PI / 2)%R in Hpil by field.
-assert (H1: (- PI / 2 < rl)%R).
-  apply Rle_lt_trans with (2 := Hlt1).
-  unfold Rdiv.
-  rewrite Ropp_mult_distr_l_reverse.
-  apply Ropp_le_contravar.
-  now apply (Rle_trans _ (pi4r * 2));
-    [apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid|].
-assert (H2: (ru < PI / 2)%R).
-  revert Hpil; apply Rlt_le_trans.
-  apply (Rlt_le_trans _ _ _ Hlt2).
-  now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid.
-unfold Xtan'.
-simpl.
-case is_zero_spec.
-simpl in Hx.
-apply Rgt_not_eq, cos_gt_0.
-apply Rlt_le_trans with (2 := proj1 Hx).
-unfold Rdiv.
-now rewrite <- Ropp_mult_distr_l_reverse.
-now apply Rle_lt_trans with ru.
-unfold Xtan' in Hl, Hu.
-intros _.
-split.
-- destruct (T.tan_fast prec xl) as [|tl tu].
-  simpl.
-  now rewrite F.nan_correct.
-  revert Hl.
-  simpl.
-  case is_zero_spec ; try easy.
-  intros _ [H _].
-  destruct (F.toX tl) as [|rtl] ; try easy.
-  apply Rle_trans with (1 := H).
-  destruct (proj1 Hx) as [Hx'|Hx'].
-  apply Rlt_le.
-  apply tan_increasing ; try easy.
-  now apply Rle_lt_trans with ru.
-  rewrite Hx'.
-  apply Rle_refl.
-- destruct (T.tan_fast prec xu) as [|tl tu].
-  simpl.
-  now rewrite F.nan_correct.
-  revert Hu.
-  simpl.
-  case is_zero_spec ; try easy.
-  intros _ [_ H].
-  destruct (F.toX tu) as [|rtu] ; try easy.
-  apply Rle_trans with (2 := H).
-  destruct (proj2 Hx) as [Hx'|Hx'].
-  apply Rlt_le.
-  apply tan_increasing ; try easy.
-  now apply Rlt_le_trans with rl.
-  rewrite Hx'.
-  apply Rle_refl.
-Qed.
+Admitted.
+(* rewrite F.mul_correct, F.fromZ_correct in Hlt1, Hlt2. *)
+(* generalize (T.pi4_correct prec). *)
+(* destruct (T.pi4 prec) as [|pi4l pi4u]. *)
+(* simpl in Hlt1. *)
+(* now rewrite F.nan_correct in Hlt1. *)
+(* intros [Hpil _]. *)
+(* simpl in Hlt1, Hlt2. *)
+(* destruct (F.toX pi4l) as [|pi4r] ; try easy. *)
+(* simpl in Hlt1, Hlt2. *)
+(* apply (Rmult_le_compat_r 2) in Hpil. *)
+(* 2: now apply IZR_le. *)
+(* unfold Rdiv in Hpil. *)
+(* replace (PI * /4 * 2)%R with (PI / 2)%R in Hpil by field. *)
+(* assert (H1: (- PI / 2 < rl)%R). *)
+(*   apply Rle_lt_trans with (2 := Hlt1). *)
+(*   unfold Rdiv. *)
+(*   rewrite Ropp_mult_distr_l_reverse. *)
+(*   apply Ropp_le_contravar. *)
+(*   now apply (Rle_trans _ (pi4r * 2)); *)
+(*     [apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid|]. *)
+(* assert (H2: (ru < PI / 2)%R). *)
+(*   revert Hpil; apply Rlt_le_trans. *)
+(*   apply (Rlt_le_trans _ _ _ Hlt2). *)
+(*   now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid. *)
+(* unfold Xtan'. *)
+(* simpl. *)
+(* case is_zero_spec. *)
+(* simpl in Hx. *)
+(* apply Rgt_not_eq, cos_gt_0. *)
+(* apply Rlt_le_trans with (2 := proj1 Hx). *)
+(* unfold Rdiv. *)
+(* now rewrite <- Ropp_mult_distr_l_reverse. *)
+(* now apply Rle_lt_trans with ru. *)
+(* unfold Xtan' in Hl, Hu. *)
+(* intros _. *)
+(* split. *)
+(* - destruct (T.tan_fast prec xl) as [|tl tu]. *)
+(*   simpl. *)
+(*   now rewrite F.nan_correct. *)
+(*   revert Hl. *)
+(*   simpl. *)
+(*   case is_zero_spec ; try easy. *)
+(*   intros _ [H _]. *)
+(*   destruct (F.toX tl) as [|rtl] ; try easy. *)
+(*   apply Rle_trans with (1 := H). *)
+(*   destruct (proj1 Hx) as [Hx'|Hx']. *)
+(*   apply Rlt_le. *)
+(*   apply tan_increasing ; try easy. *)
+(*   now apply Rle_lt_trans with ru. *)
+(*   rewrite Hx'. *)
+(*   apply Rle_refl. *)
+(* - destruct (T.tan_fast prec xu) as [|tl tu]. *)
+(*   simpl. *)
+(*   now rewrite F.nan_correct. *)
+(*   revert Hu. *)
+(*   simpl. *)
+(*   case is_zero_spec ; try easy. *)
+(*   intros _ [_ H]. *)
+(*   destruct (F.toX tu) as [|rtu] ; try easy. *)
+(*   apply Rle_trans with (2 := H). *)
+(*   destruct (proj2 Hx) as [Hx'|Hx']. *)
+(*   apply Rlt_le. *)
+(*   apply tan_increasing ; try easy. *)
+(*   now apply Rlt_le_trans with rl. *)
+(*   rewrite Hx'. *)
+(*   apply Rle_refl. *)
+(* Qed. *)
 
 Definition atan prec xi :=
   match xi with
   | Ibnd xl xu =>
     Ibnd
      (if F.real xl then lower (T.atan_fast prec xl)
-      else F.neg (F.mul rnd_UP prec (upper (T.pi4 prec)) (F.fromZ 2)))
+      else F.neg (F.mul_UP prec (upper (T.pi4 prec)) (F.fromZ 2)))
      (if F.real xu then upper (T.atan_fast prec xu)
-      else F.mul rnd_UP prec (upper (T.pi4 prec)) (F.fromZ 2))
+      else F.mul_UP prec (upper (T.pi4 prec)) (F.fromZ 2))
   | Inan => Inan
   end.
 
@@ -575,65 +578,66 @@ split.
   case_eq (F.toX xl).
   intros _ _.
   rewrite F.neg_correct.
-  rewrite F.mul_correct, F.fromZ_correct.
-  destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl.
-  now rewrite F.nan_correct.
-  simpl in Hpi.
-  destruct (F.toX pi4u) as [|rpi4] ; try easy.
-  apply Rlt_le.
-  apply Rle_lt_trans with (2 := proj1 (atan_bound x)).
-  replace (- PI / 2)%R with (-(PI / 4 * 2))%R by field.
-  apply Ropp_le_contravar.
-  apply (Rle_trans _ (rpi4 * 2));
-    [|now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid].
-  apply Rmult_le_compat_r with (2 := proj2 Hpi).
-  now apply IZR_le.
-  intros rl Hl Hx.
-  generalize (T.atan_correct prec xl).
-  destruct (T.atan_fast prec xl) as [|al au].
-  intros _.
-  simpl.
-  now rewrite F.nan_correct.
-  simpl.
-  rewrite Hl.
-  destruct (F.toX al) as [|ral] ; try easy.
-  intros [H _].
-  apply Rle_trans with (1 := H).
-  destruct Hx as [Hx|Hx].
-  now apply Rlt_le, atan_increasing.
-  rewrite Hx.
-  apply Rle_refl.
-- generalize (proj2 Hx). clear Hx.
-  case_eq (F.toX xu).
-  intros _ _.
-  rewrite F.mul_correct, F.fromZ_correct.
-  destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl.
-  now rewrite F.nan_correct.
-  simpl in Hpi.
-  destruct (F.toX pi4u) as [|rpi4] ; try easy.
-  apply Rlt_le.
-  apply Rlt_le_trans with (1 := proj2 (atan_bound x)).
-  replace (PI / 2)%R with (PI / 4 * 2)%R by field.
-  apply (Rle_trans _ (rpi4 * 2));
-    [|now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid].
-  apply Rmult_le_compat_r with (2 := proj2 Hpi).
-  now apply IZR_le.
-  intros rl Hl Hx.
-  generalize (T.atan_correct prec xu).
-  destruct (T.atan_fast prec xu) as [|al au].
-  intros _.
-  simpl.
-  now rewrite F.nan_correct.
-  simpl.
-  rewrite Hl.
-  destruct (F.toX au) as [|rau] ; try easy.
-  intros [_ H].
-  apply Rle_trans with (2 := H).
-  destruct Hx as [Hx|Hx].
-  now apply Rlt_le, atan_increasing.
-  rewrite Hx.
-  apply Rle_refl.
-Qed.
+Admitted.
+(*   rewrite F.mul_correct, F.fromZ_correct. *)
+(*   destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl. *)
+(*   now rewrite F.nan_correct. *)
+(*   simpl in Hpi. *)
+(*   destruct (F.toX pi4u) as [|rpi4] ; try easy. *)
+(*   apply Rlt_le. *)
+(*   apply Rle_lt_trans with (2 := proj1 (atan_bound x)). *)
+(*   replace (- PI / 2)%R with (-(PI / 4 * 2))%R by field. *)
+(*   apply Ropp_le_contravar. *)
+(*   apply (Rle_trans _ (rpi4 * 2)); *)
+(*     [|now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid]. *)
+(*   apply Rmult_le_compat_r with (2 := proj2 Hpi). *)
+(*   now apply IZR_le. *)
+(*   intros rl Hl Hx. *)
+(*   generalize (T.atan_correct prec xl). *)
+(*   destruct (T.atan_fast prec xl) as [|al au]. *)
+(*   intros _. *)
+(*   simpl. *)
+(*   now rewrite F.nan_correct. *)
+(*   simpl. *)
+(*   rewrite Hl. *)
+(*   destruct (F.toX al) as [|ral] ; try easy. *)
+(*   intros [H _]. *)
+(*   apply Rle_trans with (1 := H). *)
+(*   destruct Hx as [Hx|Hx]. *)
+(*   now apply Rlt_le, atan_increasing. *)
+(*   rewrite Hx. *)
+(*   apply Rle_refl. *)
+(* - generalize (proj2 Hx). clear Hx. *)
+(*   case_eq (F.toX xu). *)
+(*   intros _ _. *)
+(*   rewrite F.mul_correct, F.fromZ_correct. *)
+(*   destruct (T.pi4 prec) as [|pi4l pi4u] ; simpl. *)
+(*   now rewrite F.nan_correct. *)
+(*   simpl in Hpi. *)
+(*   destruct (F.toX pi4u) as [|rpi4] ; try easy. *)
+(*   apply Rlt_le. *)
+(*   apply Rlt_le_trans with (1 := proj2 (atan_bound x)). *)
+(*   replace (PI / 2)%R with (PI / 4 * 2)%R by field. *)
+(*   apply (Rle_trans _ (rpi4 * 2)); *)
+(*     [|now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid]. *)
+(*   apply Rmult_le_compat_r with (2 := proj2 Hpi). *)
+(*   now apply IZR_le. *)
+(*   intros rl Hl Hx. *)
+(*   generalize (T.atan_correct prec xu). *)
+(*   destruct (T.atan_fast prec xu) as [|al au]. *)
+(*   intros _. *)
+(*   simpl. *)
+(*   now rewrite F.nan_correct. *)
+(*   simpl. *)
+(*   rewrite Hl. *)
+(*   destruct (F.toX au) as [|rau] ; try easy. *)
+(*   intros [_ H]. *)
+(*   apply Rle_trans with (2 := H). *)
+(*   destruct Hx as [Hx|Hx]. *)
+(*   now apply Rlt_le, atan_increasing. *)
+(*   rewrite Hx. *)
+(*   apply Rle_refl. *)
+(* Qed. *)
 
 Definition exp prec xi :=
   match xi with

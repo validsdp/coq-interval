@@ -25,6 +25,7 @@ Require Import Basic.
 Require Import Generic.
 Require Import Generic_proof.
 Require Import Sig.
+Require Import Interval.Interval.  (* for le_upper/lower, TODO PR: move them? *)
 
 Module Type Radix.
   Parameter val : radix.
@@ -47,6 +48,16 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   Definition toX (x : type) := FtoX x.
   Definition toR x := proj_val (toX x).
   Definition fromF (x : type) := x.
+
+  Definition real (f : float radix) := match f with Fnan => false | _ => true end.
+
+  Lemma real_correct :
+    forall f, real f = match toX f with Xnan => false | _ => true end.
+  Proof.
+  intros f.
+  now case f.
+  Qed.
+
   Definition precision := positive.
   Definition sfactor := Z.
   Definition prec := fun x : positive => x.
@@ -65,11 +76,16 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   Definition abs := @Fabs radix.
   Definition scale := @Fscale radix.
   Definition div2 := @Fdiv2 radix.
-  Definition add := @Fadd radix.
-  Definition sub := @Fsub radix.
-  Definition mul := @Fmul radix.
-  Definition div := @Fdiv radix.
-  Definition sqrt := @Fsqrt radix.
+  Definition add_UP := @Fadd radix rnd_UP.
+  Definition add_DN := @Fadd radix rnd_DN.
+  Definition sub_UP := @Fsub radix rnd_UP.
+  Definition sub_DN := @Fsub radix rnd_DN.
+  Definition mul_UP := @Fmul radix rnd_UP.
+  Definition mul_DN := @Fmul radix rnd_DN.
+  Definition div_UP := @Fdiv radix rnd_UP.
+  Definition div_DN := @Fdiv radix rnd_DN.
+  Definition sqrt_UP := @Fsqrt radix rnd_UP.
+  Definition sqrt_DN := @Fsqrt radix rnd_DN.
   Definition nearbyint := @Fnearbyint_exact radix.
   Definition zero_correct := refl_equal (Xreal R0).
   Definition nan_correct := refl_equal Xnan.
@@ -77,11 +93,95 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   Definition max_correct := @Fmax_correct radix.
   Definition neg_correct := @Fneg_correct radix.
   Definition abs_correct := @Fabs_correct radix.
-  Definition add_correct := @Fadd_correct radix.
-  Definition sub_correct := @Fsub_correct radix.
-  Definition mul_correct := @Fmul_correct radix.
-  Definition div_correct := @Fdiv_correct radix.
-  Definition sqrt_correct := @Fsqrt_correct radix.
+
+  Lemma rnd_binop_UP_correct op Rop :
+    (forall mode p x y,
+       toX (op mode p x y)
+       = Xround radix mode (prec p) (Xlift2 Rop (toX x) (toX y)))
+    -> forall p x y,
+      le_upper (Xlift2 Rop (toX x) (toX y)) (toX (op rnd_UP p x y)).
+  Proof.
+  intros H p x y; rewrite H; clear H.
+  set (z := Xlift2 _ _ _).
+  unfold Xround, Xlift.
+  case z; [exact I|intro z'; simpl].
+  now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid.
+  Qed.
+
+  Lemma rnd_binop_DN_correct op Rop :
+    (forall mode p x y,
+       toX (op mode p x y)
+       = Xround radix mode (prec p) (Xlift2 Rop (toX x) (toX y)))
+    -> forall p x y,
+      le_lower (toX (op rnd_DN p x y)) (Xlift2 Rop (toX x) (toX y)).
+  Proof.
+  intros H p x y; rewrite H; clear H.
+  set (z := Xlift2 _ _ _).
+  unfold Xround, Xlift.
+  case z; [exact I|intro z'].
+  unfold le_lower, Xneg; simpl; apply Ropp_le_contravar.
+  now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid.
+  Qed.
+
+  Definition add_UP_correct :=
+    rnd_binop_UP_correct Fadd Rplus (@Fadd_correct radix).
+  Definition add_DN_correct :=
+    rnd_binop_DN_correct Fadd Rplus (@Fadd_correct radix).
+  Definition sub_UP_correct :=
+    rnd_binop_UP_correct Fsub Rminus (@Fsub_correct radix).
+  Definition sub_DN_correct :=
+    rnd_binop_DN_correct Fsub Rminus (@Fsub_correct radix).
+  Definition mul_UP_correct :=
+    rnd_binop_UP_correct Fmul Rmult (@Fmul_correct radix).
+  Definition mul_DN_correct :=
+    rnd_binop_DN_correct Fmul Rmult (@Fmul_correct radix).
+
+  Lemma div_UP_correct :
+    forall p x y,
+      le_upper (Xdiv (toX x) (toX y)) (toX (Fdiv rnd_UP p x y)).
+  Proof.
+  intros p x y; rewrite (@Fdiv_correct radix).
+  set (z := Xdiv _ _).
+  unfold Xround, Xlift.
+  case z; [exact I|intro z'; simpl].
+  now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid.
+  Qed.
+
+  Lemma div_DN_correct :
+    forall p x y,
+      le_lower (toX (Fdiv rnd_DN p x y)) (Xdiv (toX x) (toX y)).
+  Proof.
+  intros p x y; rewrite (@Fdiv_correct radix).
+  set (z := Xdiv _ _).
+  unfold Xround, Xlift.
+  case z; [exact I|intro z'].
+  unfold le_lower, Xneg; simpl; apply Ropp_le_contravar.
+  now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid.
+  Qed.
+
+  Definition sqrt_UP_correct :
+    forall p x,
+      le_upper (Xsqrt (toX x)) (toX (Fsqrt rnd_UP p x)).
+  Proof.
+  intros p x; rewrite (@Fsqrt_correct radix).
+  set (z := Xsqrt _).
+  unfold Xround, Xlift.
+  case z; [exact I|intro z'; simpl].
+  now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid.
+  Qed.
+
+  Definition sqrt_DN_correct :
+    forall p x,
+      le_lower (toX (Fsqrt rnd_DN p x)) (Xsqrt (toX x)).
+  Proof.
+  intros p x; rewrite (@Fsqrt_correct radix).
+  set (z := Xsqrt _).
+  unfold Xround, Xlift.
+  case z; [exact I|intro z'].
+  unfold le_lower, Xneg; simpl; apply Ropp_le_contravar.
+  now apply Generic_fmt.round_DN_pt, FLX.FLX_exp_valid.
+  Qed.
+
   Definition nearbyint_correct := @Fnearbyint_exact_correct radix.
 
   Definition fromZ n : float radix := match n with Zpos p => Float false p Z0 | Zneg p => Float true p Z0 | Z0 => Fzero end.
@@ -89,15 +189,6 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   Lemma fromZ_correct : forall n, FtoX (toF (fromZ n)) = Xreal (IZR n).
   Proof.
     intros. case n ; split.
-  Qed.
-
-  Definition real (f : float radix) := match f with Fnan => false | _ => true end.
-
-  Lemma real_correct :
-    forall f, real f = match toX f with Xnan => false | _ => true end.
-  Proof.
-  intros f.
-  now case f.
   Qed.
 
   Lemma cmp_correct :
