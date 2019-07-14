@@ -1437,11 +1437,15 @@ Tactic Notation "integral" "with" constr(params) :=
 End IntervalTactic.
 
 (*Require Import Specific_stdz.*)
-Require Import Specific_bigint.
-Require Import Specific_ops.
-Module SFBI2 := SpecificFloat BigIntRadix2.
-Module ITSFBI2 := IntervalTactic SFBI2.
-Export ITSFBI2.
+(* Require Import Specific_bigint. *)
+(* Require Import Specific_ops. *)
+(* Module SFBI2 := SpecificFloat BigIntRadix2. *)
+(* Module ITSFBI2 := IntervalTactic SFBI2. *)
+(* Export ITSFBI2. *)
+
+Require Import Prim_or_big_ops.
+Module ITSFPBI2 := IntervalTactic PrimOrBigFloat.
+Export ITSFPBI2.
 
 Import Private.
 
