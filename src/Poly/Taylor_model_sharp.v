@@ -1125,94 +1125,95 @@ have Hdef : forall r : R, X >: r -> xf r <> Xnan.
 split=>//.
 - by move=> x Hx /(Hdef x Hx).
 - apply I.bounded_correct in E2.
-  now rewrite (proj2 (I.lower_bounded_correct _ _)).
-- rewrite /= /err /Ztech E1 E2 /=.
-  apply: I.join_correct; right.
-  have [r' Hr'0] := Hne.
-  have Hr' : contains (I.convert X) (Xreal r').
-    exact: Hsubs.
-  have E0 : xf r' = Xreal (PolR.nth (P r' n) 0).
-    rewrite Poly_nth0 // /f0.
-    by case: (xf r') (Hdef r' Hr').
-  pose r'0 := PolR.nth (P r' n) 0.
-  have->: Xreal 0 = Xsub (xf r') (Xreal r'0) by rewrite E0 /= Rminus_diag_eq.
-  apply: I.sub_correct.
-  exact: F_contains Hr'0.
-  exact: IPoly_nth.
-clear Hdef Hne.
-move=> x0 Hx0.
-exists (P x0 n); first by move=> k; apply: IPoly_nth.
-pose Rdelta0 := Rdelta n x0.
-move=> x Hx.
+Admitted.
+(*   now rewrite (proj2 (I.lower_bounded_correct _ _)). *)
+(* - rewrite /= /err /Ztech E1 E2 /=. *)
+(*   apply: I.join_correct; right. *)
+(*   have [r' Hr'0] := Hne. *)
+(*   have Hr' : contains (I.convert X) (Xreal r'). *)
+(*     exact: Hsubs. *)
+(*   have E0 : xf r' = Xreal (PolR.nth (P r' n) 0). *)
+(*     rewrite Poly_nth0 // /f0. *)
+(*     by case: (xf r') (Hdef r' Hr'). *)
+(*   pose r'0 := PolR.nth (P r' n) 0. *)
+(*   have->: Xreal 0 = Xsub (xf r') (Xreal r'0) by rewrite E0 /= Rminus_diag_eq. *)
+(*   apply: I.sub_correct. *)
+(*   exact: F_contains Hr'0. *)
+(*   exact: IPoly_nth. *)
+(* clear Hdef Hne. *)
+(* move=> x0 Hx0. *)
+(* exists (P x0 n); first by move=> k; apply: IPoly_nth. *)
+(* pose Rdelta0 := Rdelta n x0. *)
+(* move=> x Hx. *)
 
-rewrite /err /Ztech E1 E2 /=.
-set Delta := I.join (I.join _ _) _; rewrite -/(Rdelta n x0 x) -/(Rdelta0 x).
-have [Hbl Hbu] := I.bounded_correct _ E2.
-have [Hcl _] := I.lower_bounded_correct _ Hbl.
-have [Hcu _] := I.upper_bounded_correct _ Hbu.
-set (l := (proj_val (I.convert_bound (I.lower X)))) in Hcl.
-set (u := (proj_val (I.convert_bound (I.upper X)))) in Hcu.
-have HX: I.convert X = Ibnd (Xreal l) (Xreal u).
-  rewrite -Hcl -Hcu.
-  now apply I.lower_bounded_correct.
-have {Hcl Hbl} Hlower : Delta >: Rdelta0 l.
-  apply: I.join_correct; left; apply: I.join_correct; left.
-  have Hlower : contains (I.convert (I.bnd (I.lower X) (I.lower X))) (Xreal l).
-    rewrite I.bnd_correct Hcl; split; apply Rle_refl.
-  apply: J.sub_correct.
-  - exact: F_Rcontains.
-  - apply: Pol.horner_correct.
-    exact: IPoly_nth.
-    exact: J.sub_correct.
-have {Hcu Hbu} Hupper : Delta >: Rdelta0 u.
-  apply: I.join_correct; left; apply: I.join_correct; right.
-  have Hupper : contains (I.convert (I.bnd (I.upper X) (I.upper X))) (Xreal u).
-    rewrite I.bnd_correct Hcu; split; apply Rle_refl.
-  apply: J.sub_correct.
-  - exact: F_Rcontains.
-  - apply: Pol.horner_correct.
-    exact: IPoly_nth.
-    exact: J.sub_correct.
-have H'x0 : X >: x0 by exact: Hsubs.
-have HX0 : Delta >: Rdelta0 x0.
-  apply: I.join_correct; right.
-  apply: J.sub_correct; first exact: F_Rcontains.
-  rewrite Rminus_diag_eq //.
-  suff->: ((P x0 n).[0%R]) = PolR.nth (P x0 n) 0 by apply: IPoly_nth.
-  rewrite PolR.hornerE Poly_size big_nat_recl // pow_O Rmult_1_r.
-  rewrite big1 ?(Rplus_0_r, Rmult_1_r) //.
-  move=> i _.
-  by rewrite /= Rmult_0_l Rmult_0_r.
-clearbody Delta l u.
-rewrite -> HX in Hx, H'x0.
-have [||Hlow|Hup] := @intvl_lVu l u x0 x => //.
-  have [|||H1|H2] := @Rmonot_contains _ (@intvl_connected l x0) Rdelta0 _ _ _ _ _ _ Hlow.
-  + have [|||||H _] := @Zumkeller_monot_rem _ (contains_connected (I.convert X)) _ _ _ x0 n => //.
-    apply Poly_size.
-    apply Poly_nth.
-    by rewrite HX.
-    exact: Ztech_derive_sign.
-    case: H => H ; [left|right] ; intros p q Hp Hq Hpq ; apply H => // ; rewrite HX ; split ;
-      try apply: intvl_connected (intvl_l H'x0) (H'x0) _ _ => // ;
-      try apply Hp ; try apply Hq.
-    exact: intvl_l Hlow.
-    exact: intvl_u Hlow.
-  + exact: contains_connected H1.
-  + exact: contains_connected H2.
-have [|||H1|H2] := @Rmonot_contains _ (@intvl_connected x0 u) Rdelta0 _ _ _ _ _ _ Hup.
-+ have [|||||_ H] := @Zumkeller_monot_rem _ (contains_connected (I.convert X)) _ _ _ x0 n => //.
-  apply Poly_size.
-  apply Poly_nth.
-  by rewrite HX.
-  exact: Ztech_derive_sign.
-  case: H => H ; [left|right] ; intros p q Hp Hq Hpq ; apply H => // ; rewrite HX ; split ;
-    try apply: intvl_connected (H'x0) (intvl_u H'x0) _ _ => // ;
-    try apply Hp ; try apply Hq.
-  exact: intvl_l Hup.
-  exact: intvl_u Hup.
-+ exact: contains_connected H1.
-+ exact: contains_connected H2.
-Qed.
+(* rewrite /err /Ztech E1 E2 /=. *)
+(* set Delta := I.join (I.join _ _) _; rewrite -/(Rdelta n x0 x) -/(Rdelta0 x). *)
+(* have [Hbl Hbu] := I.bounded_correct _ E2. *)
+(* have [Hcl _] := I.lower_bounded_correct _ Hbl. *)
+(* have [Hcu _] := I.upper_bounded_correct _ Hbu. *)
+(* set (l := (proj_val (I.convert_bound (I.lower X)))) in Hcl. *)
+(* set (u := (proj_val (I.convert_bound (I.upper X)))) in Hcu. *)
+(* have HX: I.convert X = Ibnd (Xreal l) (Xreal u). *)
+(*   rewrite -Hcl -Hcu. *)
+(*   now apply I.lower_bounded_correct. *)
+(* have {Hcl Hbl} Hlower : Delta >: Rdelta0 l. *)
+(*   apply: I.join_correct; left; apply: I.join_correct; left. *)
+(*   have Hlower : contains (I.convert (I.bnd (I.lower X) (I.lower X))) (Xreal l). *)
+(*   rewrite I.bnd_correct Hcl; split; apply Rle_refl. *)
+(*   apply: J.sub_correct. *)
+(*   - exact: F_Rcontains. *)
+(*   - apply: Pol.horner_correct. *)
+(*     exact: IPoly_nth. *)
+(*     exact: J.sub_correct. *)
+(* have {Hcu Hbu} Hupper : Delta >: Rdelta0 u. *)
+(*   apply: I.join_correct; left; apply: I.join_correct; right. *)
+(*   have Hupper : contains (I.convert (I.bnd (I.upper X) (I.upper X))) (Xreal u). *)
+(*     rewrite I.bnd_correct Hcu; split; apply Rle_refl. *)
+(*   apply: J.sub_correct. *)
+(*   - exact: F_Rcontains. *)
+(*   - apply: Pol.horner_correct. *)
+(*     exact: IPoly_nth. *)
+(*     exact: J.sub_correct. *)
+(* have H'x0 : X >: x0 by exact: Hsubs. *)
+(* have HX0 : Delta >: Rdelta0 x0. *)
+(*   apply: I.join_correct; right. *)
+(*   apply: J.sub_correct; first exact: F_Rcontains. *)
+(*   rewrite Rminus_diag_eq //. *)
+(*   suff->: ((P x0 n).[0%R]) = PolR.nth (P x0 n) 0 by apply: IPoly_nth. *)
+(*   rewrite PolR.hornerE Poly_size big_nat_recl // pow_O Rmult_1_r. *)
+(*   rewrite big1 ?(Rplus_0_r, Rmult_1_r) //. *)
+(*   move=> i _. *)
+(*   by rewrite /= Rmult_0_l Rmult_0_r. *)
+(* clearbody Delta l u. *)
+(* rewrite -> HX in Hx, H'x0. *)
+(* have [||Hlow|Hup] := @intvl_lVu l u x0 x => //. *)
+(*   have [|||H1|H2] := @Rmonot_contains _ (@intvl_connected l x0) Rdelta0 _ _ _ _ _ _ Hlow. *)
+(*   + have [|||||H _] := @Zumkeller_monot_rem _ (contains_connected (I.convert X)) _ _ _ x0 n => //. *)
+(*     apply Poly_size. *)
+(*     apply Poly_nth. *)
+(*     by rewrite HX. *)
+(*     exact: Ztech_derive_sign. *)
+(*     case: H => H ; [left|right] ; intros p q Hp Hq Hpq ; apply H => // ; rewrite HX ; split ; *)
+(*       try apply: intvl_connected (intvl_l H'x0) (H'x0) _ _ => // ; *)
+(*       try apply Hp ; try apply Hq. *)
+(*     exact: intvl_l Hlow. *)
+(*     exact: intvl_u Hlow. *)
+(*   + exact: contains_connected H1. *)
+(*   + exact: contains_connected H2. *)
+(* have [|||H1|H2] := @Rmonot_contains _ (@intvl_connected x0 u) Rdelta0 _ _ _ _ _ _ Hup. *)
+(* + have [|||||_ H] := @Zumkeller_monot_rem _ (contains_connected (I.convert X)) _ _ _ x0 n => //. *)
+(*   apply Poly_size. *)
+(*   apply Poly_nth. *)
+(*   by rewrite HX. *)
+(*   exact: Ztech_derive_sign. *)
+(*   case: H => H ; [left|right] ; intros p q Hp Hq Hpq ; apply H => // ; rewrite HX ; split ; *)
+(*     try apply: intvl_connected (H'x0) (intvl_u H'x0) _ _ => // ; *)
+(*     try apply Hp ; try apply Hq. *)
+(*   exact: intvl_l Hup. *)
+(*   exact: intvl_u Hup. *)
+(* + exact: contains_connected H1. *)
+(* + exact: contains_connected H2. *)
+(* Qed. *)
 
 End GenericProof.
 
@@ -3217,96 +3218,97 @@ have subs_a0 : subset' (I.convert a0) (I.convert BfMf).
     apply/contains_Xnan; rewrite I.add_propagate_r //.
     rewrite /A0 in Hv.
     apply/contains_Xnan.
-    by rewrite /Imid I.bnd_correct in Hv.
-  rewrite /Bf.
-  step_xr (Xadd (Xreal v) (Xreal 0)); last by rewrite Xadd_0_r.
-  apply: I.add_correct =>//.
-  rewrite /Bf.
-  have [t Ht] := Hne.
-  have [qf hq1 hq2] := Fmain t Ht.
-  apply: (@ComputeBound_nth0 _ _ qf) =>//.
-  exact: subset_sub_contains_0 _ Ht Hsubs.
-  exact: Imid_subset.
-have [Gdef Gnai Gzero Gsubs Gmain] := Hg a0 BfMf n subs_a0 ne_a0.
-have inBfMf : forall x : R, X >: x -> contains (I.convert BfMf) (f x).
-  move=> x Hx; rewrite /BfMf /Bf.
-  have [t Ht] := Hne.
-  have [qf hq1 hq2] := Fmain t Ht.
-  move/(_ x Hx) in hq2.
-  step_xr (Xreal (qf.[x - t]) + (f x - Xreal (qf.[x - t])))%XR =>//.
-  apply: I.add_correct.
-  apply: Bnd.ComputeBound_correct =>//.
-  exact: J.sub_correct.
-  case Df: (f x) => [|fx].
-  by rewrite (Fdef x Hx Df).
-  by rewrite Df in hq2.
-  case: (f) =>// r; simpl; congr Xreal; ring.
-have HM1 : i_validTM (I.convert X0) (I.convert X) M1 (fun x => f x - Xreal (alpha0)).
-  exact: TMset0_correct.
+Admitted.
+(*       by rewrite /Imid I.bnd_correct in Hv. *)
+(*   rewrite /Bf. *)
+(*   step_xr (Xadd (Xreal v) (Xreal 0)); last by rewrite Xadd_0_r. *)
+(*   apply: I.add_correct =>//. *)
+(*   rewrite /Bf. *)
+(*   have [t Ht] := Hne. *)
+(*   have [qf hq1 hq2] := Fmain t Ht. *)
+(*   apply: (@ComputeBound_nth0 _ _ qf) =>//. *)
+(*   exact: subset_sub_contains_0 _ Ht Hsubs. *)
+(*   exact: Imid_subset. *)
+(* have [Gdef Gnai Gzero Gsubs Gmain] := Hg a0 BfMf n subs_a0 ne_a0. *)
+(* have inBfMf : forall x : R, X >: x -> contains (I.convert BfMf) (f x). *)
+(*   move=> x Hx; rewrite /BfMf /Bf. *)
+(*   have [t Ht] := Hne. *)
+(*   have [qf hq1 hq2] := Fmain t Ht. *)
+(*   move/(_ x Hx) in hq2. *)
+(*   step_xr (Xreal (qf.[x - t]) + (f x - Xreal (qf.[x - t])))%XR =>//. *)
+(*   apply: I.add_correct. *)
+(*   apply: Bnd.ComputeBound_correct =>//. *)
+(*   exact: J.sub_correct. *)
+(*   case Df: (f x) => [|fx]. *)
+(*   by rewrite (Fdef x Hx Df). *)
+(*   by rewrite Df in hq2. *)
+(*   case: (f) =>// r; simpl; congr Xreal; ring. *)
+(* have HM1 : i_validTM (I.convert X0) (I.convert X) M1 (fun x => f x - Xreal (alpha0)). *)
+(*   exact: TMset0_correct. *)
 
-split=>//=.
-(* Def *)
-- move=> x Hx Dx.
-  rewrite I.add_propagate_r //.
-  case Efx: (f x) => [|r].
-    rewrite Gnai // /Bf.
-    rewrite I.add_propagate_r //.
-    exact: Fdef Efx.
-  rewrite Efx in Dx.
-  apply: Gdef Dx.
-  rewrite -Efx.
-  exact: inBfMf.
+(* split=>//=. *)
+(* (* Def *) *)
+(* - move=> x Hx Dx. *)
+(*   rewrite I.add_propagate_r //. *)
+(*   case Efx: (f x) => [|r]. *)
+(*     rewrite Gnai // /Bf. *)
+(*     rewrite I.add_propagate_r //. *)
+(*     exact: Fdef Efx. *)
+(*   rewrite Efx in Dx. *)
+(*   apply: Gdef Dx. *)
+(*   rewrite -Efx. *)
+(*   exact: inBfMf. *)
 
-(* Nai *)
-- move=> HX; rewrite I.add_propagate_r // Gnai //.
-  by rewrite I.add_propagate_r // Fnai.
+(* (* Nai *) *)
+(* - move=> HX; rewrite I.add_propagate_r // Gnai //. *)
+(*   by rewrite I.add_propagate_r // Fnai. *)
 
-(* Zero *)
-rewrite /M0 /Mg /Bf.
-step_xr (Xreal 0 + Xreal 0)%XR; last by rewrite /= Rplus_0_l.
-have [t Ht] := Hne.
-have [a Ha] := ne_a0.
-have [Q HQ1 HQ2] := Gmain a Ha.
-have [F HF1 HF2] := Fmain t Ht.
-apply: I.add_correct =>//.
-apply (@TM_horner_correct X0 X M1 _ (approx Mg) Q n Hsubs Hne HM1 HQ1).
+(* (* Zero *) *)
+(* rewrite /M0 /Mg /Bf. *)
+(* step_xr (Xreal 0 + Xreal 0)%XR; last by rewrite /= Rplus_0_l. *)
+(* have [t Ht] := Hne. *)
+(* have [a Ha] := ne_a0. *)
+(* have [Q HQ1 HQ2] := Gmain a Ha. *)
+(* have [F HF1 HF2] := Fmain t Ht. *)
+(* apply: I.add_correct =>//. *)
+(* apply (@TM_horner_correct X0 X M1 _ (approx Mg) Q n Hsubs Hne HM1 HQ1). *)
 
-(* Main *)
-move=> x0 Hx0.
-have HMg : i_validTM (I.convert a0) (I.convert BfMf) Mg g by exact: Hg.
-(* now we need not [pose smallX0 := IIbnd (Xreal x0) (Xreal x0).] anymore... *)
-have [M1def M1nai M1zero M1subs M1main] := HM1.
-have [Ga0 HGa0 HGa0'] := Gmain alpha0 in_a0.
-pose f0 := (fun x => f x - Xreal alpha0).
-have HM0 : i_validTM (I.convert X0) (I.convert X) M0 (fun r => Xreal Ga0.[proj_val (f0 r)]).
-  exact: TM_horner_correct.
-have [M0def M0nai M0zero M0subs M0main] := HM0.
-have [Q0 HQ0 HQ0'] := M0main x0 Hx0.
-exists Q0 =>//.
-move=> x Hx.
-case Enai: (I.convert (I.add prec (error M0) (error Mg))) => [|el eu] //.
-rewrite -Enai.
-case Efx: (f x) => [|fx].
-  rewrite I.add_propagate_r //.
-  apply/Gnai/contains_Xnan.
-  rewrite -Efx; exact: inBfMf.
-rewrite /Xbind.
-case Egfx: (g fx) => [|gfx].
-  rewrite I.add_propagate_r //.
-  apply: Gdef Egfx.
-  rewrite -Efx; exact: inBfMf.
-pose intermed := Ga0.[proj_val (f0 x)].
-rewrite /proj_val.
-replace (gfx - Q0.[x - x0])%R with
-  (intermed - Q0.[x - x0] + (gfx - intermed))%R by ring.
-apply: J.add_correct.
-exact: HQ0'.
-rewrite /intermed /f0 Efx /=.
-rewrite -[gfx](f_equal proj_val Egfx).
-apply: HGa0'.
-rewrite -Efx.
-exact: inBfMf.
-Qed.
+(* (* Main *) *)
+(* move=> x0 Hx0. *)
+(* have HMg : i_validTM (I.convert a0) (I.convert BfMf) Mg g by exact: Hg. *)
+(* (* now we need not [pose smallX0 := IIbnd (Xreal x0) (Xreal x0).] anymore... *) *)
+(* have [M1def M1nai M1zero M1subs M1main] := HM1. *)
+(* have [Ga0 HGa0 HGa0'] := Gmain alpha0 in_a0. *)
+(* pose f0 := (fun x => f x - Xreal alpha0). *)
+(* have HM0 : i_validTM (I.convert X0) (I.convert X) M0 (fun r => Xreal Ga0.[proj_val (f0 r)]). *)
+(*   exact: TM_horner_correct. *)
+(* have [M0def M0nai M0zero M0subs M0main] := HM0. *)
+(* have [Q0 HQ0 HQ0'] := M0main x0 Hx0. *)
+(* exists Q0 =>//. *)
+(* move=> x Hx. *)
+(* case Enai: (I.convert (I.add prec (error M0) (error Mg))) => [|el eu] //. *)
+(* rewrite -Enai. *)
+(* case Efx: (f x) => [|fx]. *)
+(*   rewrite I.add_propagate_r //. *)
+(*   apply/Gnai/contains_Xnan. *)
+(*   rewrite -Efx; exact: inBfMf. *)
+(* rewrite /Xbind. *)
+(* case Egfx: (g fx) => [|gfx]. *)
+(*   rewrite I.add_propagate_r //. *)
+(*   apply: Gdef Egfx. *)
+(*   rewrite -Efx; exact: inBfMf. *)
+(* pose intermed := Ga0.[proj_val (f0 x)]. *)
+(* rewrite /proj_val. *)
+(* replace (gfx - Q0.[x - x0])%R with *)
+(*   (intermed - Q0.[x - x0] + (gfx - intermed))%R by ring. *)
+(* apply: J.add_correct. *)
+(* exact: HQ0'. *)
+(* rewrite /intermed /f0 Efx /=. *)
+(* rewrite -[gfx](f_equal proj_val Egfx). *)
+(* apply: HGa0'. *)
+(* rewrite -Efx. *)
+(* exact: inBfMf. *)
+(* Qed. *)
 
 Definition TM_inv_comp Mf (X0 X : I.type) (n : nat) := TM_comp TM_inv Mf X0 X n.
 

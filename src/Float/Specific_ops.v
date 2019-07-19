@@ -77,6 +77,7 @@ Definition PtoP n := ZtoE (Zpos n).
 Definition incr_prec x y := exponent_add x (ZtoE (Zpos y)).
 
 Definition zero := Float mantissa_zero exponent_zero.
+Definition one := Float (ZtoM 1) exponent_zero.
 Definition nan := @Fnan smantissa_type exponent_type.
 Definition nan_correct := refl_equal Xnan.
 
@@ -116,7 +117,28 @@ simpl.
 now case (mantissa_sign m).
 Qed.
 
+Definition valid_ub (_ : type) := true.
+Definition valid_lb (_ : type) := true.
+
+Lemma valid_lb_correct :
+  forall f, real f = true -> valid_lb f = true.
+Proof. now simpl. Qed.
+
+Lemma valid_ub_correct :
+  forall f, real f = true -> valid_ub f = true.
+Proof. now simpl. Qed.
+
+Lemma valid_lb_nan : valid_lb nan = true.
+Proof. now simpl. Qed.
+
+Lemma valid_ub_nan : valid_ub nan = true.
+Proof. now simpl. Qed.
+
 Definition fromZ n := Float (ZtoM n) exponent_zero.
+
+Definition fromZ_DN := fromZ.
+
+Definition fromZ_UP := fromZ.
 
 Lemma fromZ_correct :
   forall n, toX (fromZ n) = Xreal (IZR n).
@@ -130,6 +152,28 @@ apply refl_equal.
 rewrite exponent_zero_correct.
 rewrite (proj1 H0).
 now case s.
+Qed.
+
+Lemma one_correct :
+  toX one = Xreal 1.
+Proof. now unfold one; fold (fromZ 1); rewrite fromZ_correct. Qed.
+
+Lemma fromZ_DN_correct :
+  forall n,
+  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+Proof.
+intro n; split; [now simpl|].
+rewrite <- fromZ_correct; unfold toX, le_lower, le_upper, fromZ_DN.
+now case (- _)%XR; [|intros n'; right].
+Qed.
+
+Lemma fromZ_UP_correct :
+  forall n,
+  valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+Proof.
+intro n; split; [now simpl|].
+rewrite <- fromZ_correct; unfold toX, le_upper, fromZ_UP.
+now case (FtoX _); [|intros n'; right].
 Qed.
 
 Lemma match_helper_1 :
@@ -197,9 +241,12 @@ Definition neg (f : type) :=
   end.
 
 Lemma neg_correct :
-  forall x, toX (neg x) = Xneg (toX x).
+  forall x, toX (neg x) = Xneg (toX x)
+    /\ (valid_lb (neg x) = valid_ub x)
+    /\ (valid_ub (neg x) = valid_lb x).
 Proof.
 intros.
+split; [|now split].
 destruct x as [| m e].
 apply refl_equal.
 unfold toX.
@@ -230,9 +277,10 @@ Definition abs (f : type) :=
   end.
 
 Lemma abs_correct :
-  forall x, toX (abs x) = Xabs (toX x).
+  forall x, toX (abs x) = Xabs (toX x) /\ (valid_ub (abs x) = true).
 Proof.
 intros.
+split; [|easy].
 destruct x as [| m e].
 apply refl_equal.
 unfold toX.
@@ -468,17 +516,25 @@ Definition min x y :=
 
 Lemma min_correct :
   forall x y,
-  toX (min x y) = Xmin (toX x) (toX y).
+    ((valid_lb x = true \/ valid_lb y = true)
+     -> (valid_lb (min x y) = true /\ toX (min x y) = Xmin (toX x) (toX y)))
+    /\ (valid_ub x = true -> valid_ub y = true
+       -> (valid_ub (min x y) = true /\ toX (min x y) = Xmin (toX x) (toX y)))
+    /\ (valid_lb y = false -> min x y = x)
+    /\ (valid_lb x = false -> min x y = y).
 Proof.
-intros [|mx ex] [|my ey] ; try easy.
-now destruct (toX (Float mx ex)).
+intros [|mx ex] [|my ey]; try easy.
+{ now destruct (toX (Float mx ex)). }
 rewrite 2!toX_Float.
 unfold min, Xmin.
 rewrite cmp_correct by apply toX_Float.
-case Rcompare_spec ; intros H ; rewrite toX_Float ; apply f_equal, sym_eq.
-now apply Rmin_left, Rlt_le.
-now apply Rmin_left, Req_le.
-now apply Rmin_right, Rlt_le.
+case Rcompare_spec; intros H; rewrite toX_Float; unfold valid_lb, valid_ub; simpl.
+{ now split; [|split];
+    [intros; split; [|apply f_equal, sym_eq, Rmin_left, Rlt_le]..|]. }
+{ now split; [|split];
+    [intros; split; [|apply f_equal, sym_eq, Rmin_left, Req_le]..|]. }
+now split; [|split];
+  [intros; split; [|apply f_equal, sym_eq, Rmin_right, Rlt_le]..|].
 Qed.
 
 (*
@@ -499,17 +555,25 @@ Definition max x y :=
 
 Lemma max_correct :
   forall x y,
-  toX (max x y) = Xmax (toX x) (toX y).
+    ((valid_ub x = true \/ valid_ub y = true)
+     -> (valid_ub (max x y) = true /\ toX (max x y) = Xmax (toX x) (toX y)))
+    /\ (valid_lb x = true -> valid_lb y = true
+       -> (valid_lb (max x y) = true /\ toX (max x y) = Xmax (toX x) (toX y)))
+    /\ (valid_ub y = false -> max x y = x)
+    /\ (valid_ub x = false -> max x y = y).
 Proof.
 intros [|mx ex] [|my ey] ; try easy.
-now destruct (toX (Float mx ex)).
+{ now destruct (toX (Float mx ex)). }
 rewrite 2!toX_Float.
 unfold max, Xmax.
 rewrite cmp_correct by apply toX_Float.
-case Rcompare_spec ; intros H ; rewrite toX_Float ; apply f_equal, sym_eq.
-now apply Rmax_right, Rlt_le.
-now apply Rmax_right, Req_le.
-now apply Rmax_left, Rlt_le.
+case Rcompare_spec; intros H; rewrite toX_Float; unfold valid_lb, valid_ub; simpl.
+{ now split; [|split];
+    [intros; split; [|apply f_equal, sym_eq, Rmax_right, Rlt_le]..|]. }
+{ now split; [|split];
+    [intros; split; [|apply f_equal, sym_eq, Rmax_right, Req_le]..|]. }
+now split; [|split];
+  [intros; split; [|apply f_equal, sym_eq, Rmax_left, Rlt_le]..|].
 Qed.
 
 (*
@@ -803,9 +867,23 @@ Qed.
 Definition mul_UP := mul rnd_UP.
 
 Lemma mul_UP_correct :
-  forall p x y, le_upper (Xmul (toX x) (toX y)) (toX (mul_UP p x y)).
+  forall p x y,
+    ((valid_ub x = true /\ valid_ub y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end))
+     \/ (valid_lb x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end))
+     \/ (valid_ub x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end)))
+    -> (valid_ub (mul_UP p x y) = true
+        /\ le_upper (Xmul (toX x) (toX y)) (toX (mul_UP p x y))).
 Proof.
-intros p x y.
+intros p x y _; split; [reflexivity|].
 unfold mul_UP.
 rewrite mul_correct.
 unfold Xround, Xlift.
@@ -816,9 +894,23 @@ Qed.
 Definition mul_DN := mul rnd_DN.
 
 Lemma mul_DN_correct :
-  forall p x y, le_lower (toX (mul_DN p x y)) (Xmul (toX x) (toX y)).
+  forall p x y,
+    ((valid_lb x = true /\ valid_lb y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end))
+     \/ (valid_ub x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end))
+     \/ (valid_ub x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end)))
+    -> (valid_lb (mul_DN p x y) = true
+        /\ le_lower (toX (mul_DN p x y)) (Xmul (toX x) (toX y))).
 Proof.
-intros p x y.
+intros p x y _; split; [reflexivity|].
 unfold mul_DN.
 rewrite mul_correct.
 unfold Xround, Xlift.
@@ -1115,9 +1207,11 @@ Qed.
 Definition add_UP := add_slow rnd_UP.
 
 Lemma add_UP_correct :
-  forall p x y, le_upper (Xadd (toX x) (toX y)) (toX (add_UP p x y)).
+  forall p x y, valid_ub x = true -> valid_ub y = true
+    -> (valid_ub (add_UP p x y) = true
+       /\ le_upper (Xadd (toX x) (toX y)) (toX (add_UP p x y))).
 Proof.
-intros p x y.
+intros p x y _ _; split; [reflexivity|].
 unfold add_UP.
 rewrite add_slow_correct.
 unfold Xround, Xlift.
@@ -1128,9 +1222,11 @@ Qed.
 Definition add_DN := add_slow rnd_DN.
 
 Lemma add_DN_correct :
-  forall p x y, le_lower (toX (add_DN p x y)) (Xadd (toX x) (toX y)).
+  forall p x y, valid_lb x = true -> valid_lb y = true
+    -> (valid_lb (add_DN p x y) = true
+       /\ le_lower (toX (add_DN p x y)) (Xadd (toX x) (toX y))).
 Proof.
-intros p x y.
+intros p x y _ _; split; [reflexivity|].
 unfold add_DN.
 rewrite add_slow_correct.
 unfold Xround, Xlift.
@@ -1145,23 +1241,27 @@ Qed.
 Definition sub_UP prec (x y : type) := add_UP prec x (neg y).
 
 Lemma sub_UP_correct :
-  forall p x y, le_upper (Xsub (toX x) (toX y)) (toX (sub_UP p x y)).
+  forall p x y, valid_ub x = true -> valid_lb y = true
+    -> (valid_ub (sub_UP p x y) = true
+       /\ le_upper (Xsub (toX x) (toX y)) (toX (sub_UP p x y))).
 Proof.
-intros p x y.
+intros p x y _ _; split; [reflexivity|].
 unfold sub_UP.
-rewrite Xsub_split, <-neg_correct.
-apply add_UP_correct.
+rewrite Xsub_split, <-(proj1 (neg_correct _)).
+now apply add_UP_correct.
 Qed.
 
 Definition sub_DN prec (x y : type) := add_DN prec x (neg y).
 
 Lemma sub_DN_correct :
-  forall p x y, le_lower (toX (sub_DN p x y)) (Xsub (toX x) (toX y)).
+  forall p x y, valid_lb x = true -> valid_ub y = true
+    -> (valid_lb (sub_DN p x y) = true
+       /\ le_lower (toX (sub_DN p x y)) (Xsub (toX x) (toX y))).
 Proof.
-intros p x y.
+intros p x y _ _; split; [reflexivity|].
 unfold sub_DN.
-rewrite Xsub_split, <-neg_correct.
-apply add_DN_correct.
+rewrite Xsub_split, <-(proj1 (neg_correct _)).
+now apply add_DN_correct.
 Qed.
 
 (*
@@ -1343,9 +1443,25 @@ Qed.
 Definition div_UP := div rnd_UP.
 
 Lemma div_UP_correct :
-  forall p x y, le_upper (Xdiv (toX x) (toX y)) (toX (div_UP p x y)).
+  forall p x y,
+    ((valid_ub x = true /\ valid_lb y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end))
+     \/ (valid_lb x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end)
+         /\ real y = true)
+     \/ (valid_ub x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end)
+         /\ real y = true))
+    -> (valid_ub (div_UP p x y) = true
+        /\ le_upper (Xdiv (toX x) (toX y)) (toX (div_UP p x y))).
 Proof.
-intros p x y.
+intros p x y _; split; [reflexivity|].
 unfold div_UP.
 rewrite div_correct.
 unfold Xround, Xlift.
@@ -1356,9 +1472,25 @@ Qed.
 Definition div_DN := div rnd_DN.
 
 Lemma div_DN_correct :
-  forall p x y, le_lower (toX (div_DN p x y)) (Xdiv (toX x) (toX y)).
+  forall p x y,
+    ((valid_ub x = true /\ valid_ub y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end))
+     \/ (valid_lb x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end)
+         /\ real y = true)
+     \/ (valid_ub x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end)
+         /\ real y = true))
+    -> (valid_lb (div_DN p x y) = true
+        /\ le_lower (toX (div_DN p x y)) (Xdiv (toX x) (toX y))).
 Proof.
-intros p x y.
+intros p x y _; split; [reflexivity|].
 unfold div_DN.
 rewrite div_correct.
 unfold Xround, Xlift.
@@ -1520,9 +1652,13 @@ Qed.
 Definition sqrt_UP := sqrt rnd_UP.
 
 Lemma sqrt_UP_correct :
-  forall p x, le_upper (Xsqrt (toX x)) (toX (sqrt_UP p x)).
+  forall p x,
+    valid_ub x = true
+    -> (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+    -> (valid_ub (sqrt_UP p x) = true
+        /\ le_upper (Xsqrt (toX x)) (toX (sqrt_UP p x))).
 Proof.
-intros p x.
+intros p x _ _; split; [reflexivity|].
 unfold sqrt_UP.
 rewrite sqrt_correct.
 unfold Xround, Xlift.
@@ -1534,9 +1670,13 @@ Qed.
 Definition sqrt_DN := sqrt rnd_DN.
 
 Lemma sqrt_DN_correct :
-  forall p x, le_lower (toX (sqrt_DN p x)) (Xsqrt (toX x)).
+  forall p x,
+    valid_lb x = true
+    -> (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+    -> (valid_lb (sqrt_DN p x) = true
+        /\ le_lower (toX (sqrt_DN p x)) (Xsqrt (toX x))).
 Proof.
-intros p x.
+intros p x _ _; split; [reflexivity|].
 unfold sqrt_DN.
 rewrite sqrt_correct.
 unfold Xround, Xlift.

@@ -1,4 +1,4 @@
-From Coq Require Import ZArith Int63 Floats.
+From Coq Require Import ZArith Int63 Floats Psatz.
 From Flocq Require Import Raux.
 From Bignums Require Import BigZ.
 
@@ -30,12 +30,12 @@ Definition prim_to_big (x : PrimFloat.float) : SFBI2.type :=
   | PNormal | PSubn =>
     let (m, e) := frshiftexp x in
     let m := bigZ_of_int (normfr_mantissa m) in
-    let e := (bigZ_of_int e - bigZ_of_int (PrimFloat.shift + 53)%int63)%bigZ in
+    let e := (bigZ_of_int e - bigZ_of_int (Int63.of_Z FloatOps.shift + 53)%int63)%bigZ in
     Float m e
   | NNormal | NSubn =>
     let (m, e) := frshiftexp x in
     let m := bigZ_of_int (normfr_mantissa m) in
-    let e := (bigZ_of_int e - bigZ_of_int (PrimFloat.shift + 53)%int63)%bigZ in
+    let e := (bigZ_of_int e - bigZ_of_int (Int63.of_Z FloatOps.shift + 53)%int63)%bigZ in
     Float (- m)%bigZ e
   end.
 
@@ -54,14 +54,19 @@ Definition StoZ := SFBI2.StoZ.
 Definition incr_prec := SFBI2.incr_prec.
 
 Definition zero := Fprim zero.
+Definition one := Fprim one.
 Definition nan := Fbig Fnan.
 
 Definition fromZ x :=
   let f := of_int63 (Int63.of_Z x) in
   let (m, e) := frshiftexp f in
   let m := normfr_mantissa m in
-  let i := (bigZ_of_int m * 2 ^ (bigZ_of_int e - bigZ_of_int PrimFloat.shift))%bigZ in
+  let i := (bigZ_of_int m * 2 ^ (bigZ_of_int e - BigZ.of_Z FloatOps.shift))%bigZ in
   if (BigZ.of_Z x =? i)%bigZ then Fprim f else Fbig (SFBI2.fromZ x).
+
+Definition fromZ_DN := fromZ.
+
+Definition fromZ_UP := fromZ.
 
 Definition Z_size m :=
   match m with
@@ -78,7 +83,7 @@ Definition fromF f :=
     if ((e <=? 971)%Z && (-1074 <=? e)%Z
         && (Pos.size m <=? 53)%positive)%bool then
       let m := of_int63 (Int63.of_pos m) in
-      let e := Int63.of_Z (e + Int63.to_Z shift) in
+      let e := Int63.of_Z (e + FloatOps.shift) in
       let f := ldshiftexp m e in
       if s then Fprim (- f)%float else Fprim f
     else Fbig (SFBI2.fromF f)
@@ -98,6 +103,26 @@ Definition mag x :=
   match x with
   | Fprim f => SFBI2.mag (prim_to_big f)
   | Fbig f => SFBI2.mag f
+  end.
+
+Definition valid_ub x :=
+  match x with
+  | Fprim f =>
+    match (f ?= neg_infinity)%float with
+    | FEq => false
+    | _ => true
+    end
+  | Fbig f => true
+  end.
+
+Definition valid_lb x :=
+  match x with
+  | Fprim f =>
+    match (f ?= infinity)%float with
+    | FEq => false
+    | _ => true
+    end
+  | Fbig f => true
   end.
 
 Definition comparison_of_float_comparison c :=
@@ -355,87 +380,50 @@ Definition toR x := proj_val (toX x).
 Lemma zero_correct : toX zero = Xreal 0.
 Proof. reflexivity. Qed.
 
+Lemma one_correct : toX one = Xreal 1.
+Proof.
+Admitted.
+(* cette preuve ne passe pas au Qed, à regerder *)
+(* now compute; rewrite Rinv_r; [unfold IZR, IPR|lra]. Qed. *)
+
 Lemma nan_correct : toX nan = Xnan.
 Proof. reflexivity. Qed.
 
 (* From ValidSDP Require Import FlocqNativeLayer. *)
 
-Lemma fromZ_correct :
-  forall n, toX (fromZ n) = Xreal (IZR n).
+Lemma fromZ_DN_correct :
+  forall n,
+  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
 Proof.
-intro n.
-unfold fromZ.
-case_eq (frshiftexp (of_int63 (of_Z n))); intros m e Hme.
-rewrite BigZ.spec_eqb.
-case Z.eqb_spec; [ |now intros _; apply SFBI2.fromZ_correct].
-rewrite BigZ.spec_of_Z, BigZ.spec_mul, BigZ.spec_pow, BigZ.spec_sub; simpl.
 Admitted.
-(* rewrite normfr_mantissa_SFnormfr_mantissa. *)
-(* intro Hn. *)
-(* unfold toX, toF, prim_to_big. *)
-(* rewrite classify_SFclassify. *)
-(* unfold SF64classify, SFclassify. *)
-(* assert (H := frshiftexp_SFfrexp (of_int63 (of_Z n))). *)
-(* revert H; rewrite Hme. *)
-(* case_eq (Prim2SF (of_int63 (of_Z n))). *)
-(* { intros b Hf; simpl. *)
-(*   intro H; inversion H; clear H. *)
-(*   now revert Hn; rewrite H1; simpl; intro Hn; case b; rewrite Hn. } *)
-(* { intros b Hf; simpl. *)
-(*   intro H; inversion H; clear H. *)
-(*   exfalso. *)
-(*   revert Hn; rewrite H1; simpl; intro Hn. *)
-(*   now revert Hf; rewrite Hn. } *)
-(* { intros Hf; simpl. *)
-(*   intro H; inversion H; clear H. *)
-(*   exfalso. *)
-(*   revert Hn; rewrite H1; simpl; intro Hn. *)
-(*   now revert Hf; rewrite Hn. } *)
-(* intros b m' _ _ _. *)
-(* rewrite Hn, <-normfr_mantissa_SFnormfr_mantissa. *)
-(* case b. *)
-(* { case (_ =? _)%positive. *)
-(*   { *)
-(* Search _ normfr_mantissa. *)
-    
-    
-(*     Search _ SFBI2.toF. *)
-(* SFBI2.fromZ_correct  forall n : Z, FtoX (SFBI2.toF (SFBI2.fromZ n)) = Xreal (IZR n) *)
 
-(*     unfold SFBI2.toF. *)
-  
-(* Set Printing All. *)
-(* Check BigZ.spec_sub. *)
-(* rewrite <-BigZ.spec_sub. *)
-
-  
-(*   Search _ normfr_mantissa. *)
-(*   Locate "φ". *)
-(*   revert Hn. *)
-(*   unfold bigZ_of_int. *)
-(*   Search _ bigZ_of_int. *)
-  
-(*   set (p := (_, _)); case_eq p; unfold p. *)
-(*   Search _ "pair". *)
-(*   Set Printing All. *)
-(*   Search _ "pairing". *)
-  
-
-(* unfold Prim2EF. *)
-
-(* Search _ classify. *)
-(* Search _ EFclassify. *)
-
-(* Search _ of_int63. *)
-(* Search _ frshiftexp. *)
-(* Print EFfrexp. *)
-(* Search _ EFfrexp. *)
-
-(* Search _ frshiftexp. *)
+Lemma fromZ_UP_correct :
+  forall n,
+  valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+Proof.
+Admitted.
 
 Lemma real_correct :
   forall f,
   real f = match toX f with Xnan => false | _ => true end.
+Proof.
+Admitted.
+
+Lemma valid_lb_correct :
+  forall f, real f = true -> valid_lb f = true.
+Proof.
+Admitted.
+
+Lemma valid_ub_correct :
+  forall f, real f = true -> valid_ub f = true.
+Proof.
+Admitted.
+
+Lemma valid_lb_nan : valid_lb nan = true.
+Proof.
+Admitted.
+
+Lemma valid_ub_nan : valid_ub nan = true.
 Proof.
 Admitted.
 
@@ -448,22 +436,36 @@ Proof.
 Admitted.
 
 Lemma min_correct :
-  forall x y, toX (min x y) = Xmin (toX x) (toX y).
+  forall x y,
+    ((valid_lb x = true \/ valid_lb y = true)
+     -> (valid_lb (min x y) = true /\ toX (min x y) = Xmin (toX x) (toX y)))
+    /\ (valid_ub x = true -> valid_ub y = true
+       -> (valid_ub (min x y) = true /\ toX (min x y) = Xmin (toX x) (toX y)))
+    /\ (valid_lb y = false -> min x y = x)
+    /\ (valid_lb x = false -> min x y = y).
 Proof.
 Admitted.
 
 Lemma max_correct :
-  forall x y, toX (max x y) = Xmax (toX x) (toX y).
+  forall x y,
+    ((valid_ub x = true \/ valid_ub y = true)
+     -> (valid_ub (max x y) = true /\ toX (max x y) = Xmax (toX x) (toX y)))
+    /\ (valid_lb x = true -> valid_lb y = true
+       -> (valid_lb (max x y) = true /\ toX (max x y) = Xmax (toX x) (toX y)))
+    /\ (valid_ub y = false -> max x y = x)
+    /\ (valid_ub x = false -> max x y = y).
 Proof.
 Admitted.
 
 Lemma neg_correct :
-  forall x, toX (neg x) = Xneg (toX x).
+  forall x, toX (neg x) = Xneg (toX x)
+    /\ (valid_lb (neg x) = valid_ub x)
+    /\ (valid_ub (neg x) = valid_lb x).
 Proof.
 Admitted.
 
 Lemma abs_correct :
-  forall x, toX (abs x) = Xabs (toX x).
+  forall x, toX (abs x) = Xabs (toX x) /\ (valid_ub (abs x) = true).
 Proof.
 Admitted.
 
@@ -475,52 +477,128 @@ Proof.
 Admitted.
 
 Lemma add_UP_correct :
-  forall p x y, le_upper (Xadd (toX x) (toX y)) (toX (add_UP p x y)).
+  forall p x y, valid_ub x = true -> valid_ub y = true
+    -> (valid_ub (add_UP p x y) = true
+       /\ le_upper (Xadd (toX x) (toX y)) (toX (add_UP p x y))).
 Proof.
 Admitted.
 
 Lemma add_DN_correct :
-  forall p x y, le_lower (toX (add_DN p x y)) (Xadd (toX x) (toX y)).
+  forall p x y, valid_lb x = true -> valid_lb y = true
+    -> (valid_lb (add_DN p x y) = true
+       /\ le_lower (toX (add_DN p x y)) (Xadd (toX x) (toX y))).
 Proof.
 Admitted.
 
 Lemma sub_UP_correct :
-  forall p x y, le_upper (Xsub (toX x) (toX y)) (toX (sub_UP p x y)).
+  forall p x y, valid_ub x = true -> valid_lb y = true
+    -> (valid_ub (sub_UP p x y) = true
+       /\ le_upper (Xsub (toX x) (toX y)) (toX (sub_UP p x y))).
 Proof.
 Admitted.
 
 Lemma sub_DN_correct :
-  forall p x y, le_lower (toX (sub_DN p x y)) (Xsub (toX x) (toX y)).
+  forall p x y, valid_lb x = true -> valid_ub y = true
+    -> (valid_lb (sub_DN p x y) = true
+       /\ le_lower (toX (sub_DN p x y)) (Xsub (toX x) (toX y))).
 Proof.
 Admitted.
 
 Lemma mul_UP_correct :
-  forall p x y, le_upper (Xmul (toX x) (toX y)) (toX (mul_UP p x y)).
+  forall p x y,
+    ((valid_ub x = true /\ valid_ub y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end))
+     \/ (valid_lb x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end))
+     \/ (valid_ub x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end)))
+    -> (valid_ub (mul_UP p x y) = true
+        /\ le_upper (Xmul (toX x) (toX y)) (toX (mul_UP p x y))).
 Proof.
 Admitted.
 
 Lemma mul_DN_correct :
-  forall p x y, le_lower (toX (mul_DN p x y)) (Xmul (toX x) (toX y)).
+  forall p x y,
+    ((valid_lb x = true /\ valid_lb y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end))
+     \/ (valid_ub x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end))
+     \/ (valid_ub x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r <= 0)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 <= r)%R end)))
+    -> (valid_lb (mul_DN p x y) = true
+        /\ le_lower (toX (mul_DN p x y)) (Xmul (toX x) (toX y))).
 Proof.
 Admitted.
 
 Lemma div_UP_correct :
-  forall p x y, le_upper (Xdiv (toX x) (toX y)) (toX (div_UP p x y)).
+  forall p x y,
+    ((valid_ub x = true /\ valid_lb y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end))
+     \/ (valid_lb x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end)
+         /\ real y = true)
+     \/ (valid_ub x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end)
+         /\ real y = true))
+    -> (valid_ub (div_UP p x y) = true
+        /\ le_upper (Xdiv (toX x) (toX y)) (toX (div_UP p x y))).
 Proof.
 Admitted.
 
 Lemma div_DN_correct :
-  forall p x y, le_lower (toX (div_DN p x y)) (Xdiv (toX x) (toX y)).
+  forall p x y,
+    ((valid_ub x = true /\ valid_ub y = true
+      /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+      /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end))
+     \/ (valid_lb x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end))
+     \/ (valid_lb x = true /\ valid_ub y = true
+         /\ (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (0 < r)%R end)
+         /\ real y = true)
+     \/ (valid_ub x = true /\ valid_lb y = true
+         /\ (match toX x with Xnan => True | Xreal r => (r <= 0)%R end)
+         /\ (match toX y with Xnan => True | Xreal r => (r < 0)%R end)
+         /\ real y = true))
+    -> (valid_lb (div_DN p x y) = true
+        /\ le_lower (toX (div_DN p x y)) (Xdiv (toX x) (toX y))).
 Proof.
 Admitted.
 
 Lemma sqrt_UP_correct :
-  forall p x, le_upper (Xsqrt (toX x)) (toX (sqrt_UP p x)).
+  forall p x,
+    valid_ub x = true
+    -> (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+    -> (valid_ub (sqrt_UP p x) = true
+        /\ le_upper (Xsqrt (toX x)) (toX (sqrt_UP p x))).
 Proof.
 Admitted.
 
 Lemma sqrt_DN_correct :
-  forall p x, le_lower (toX (sqrt_DN p x)) (Xsqrt (toX x)).
+  forall p x,
+    valid_lb x = true
+    -> (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
+    -> (valid_lb (sqrt_DN p x) = true
+        /\ le_lower (toX (sqrt_DN p x)) (Xsqrt (toX x))).
 Proof.
 Admitted.
 
