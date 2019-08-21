@@ -214,10 +214,22 @@ Definition abs x :=
   | Fbig f => Fbig (SFBI2.abs f)
   end.
 
-(* TODO: improve ? *)
 Definition scale x e :=
   match x with
-  | Fprim f => Fbig (SFBI2.scale (prim_to_big f) e)
+  | Fprim f =>
+    match e with
+    | BigZ.Pos (BigN.N0 e') =>
+      let r := ldshiftexp f (e' + shift)%int63 in
+      let f' := ldshiftexp r (-e' + shift)%int63 in
+      if (f == f')%float then Fprim r
+      else Fbig (SFBI2.scale (prim_to_big f) e)
+    | BigZ.Neg (BigN.N0 e') =>
+      let r := ldshiftexp f (-e' + shift)%int63 in
+      let f' := ldshiftexp r (e' + shift)%int63 in
+      if (f == f')%float then Fprim r
+      else Fbig (SFBI2.scale (prim_to_big f) e)
+    | _ => Fbig (SFBI2.scale (prim_to_big f) e)
+    end
   | Fbig f => Fbig (SFBI2.scale f e)
   end.
 
