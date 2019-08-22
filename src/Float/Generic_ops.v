@@ -105,7 +105,7 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
 
   Lemma valid_lb_nan : valid_lb nan = true.
   Proof. easy. Qed.
-  
+
   Lemma valid_ub_nan : valid_ub nan = true.
   Proof. easy. Qed.
 
@@ -118,7 +118,7 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
     /\ (valid_lb y = false -> min x y = x)
     /\ (valid_lb x = false -> min x y = y).
   Proof. now intros x y; rewrite (Fmin_correct radix). Qed.
-  
+
   Lemma max_correct :
     forall x y,
     ((valid_ub x = true \/ valid_ub y = true)
@@ -128,17 +128,17 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
     /\ (valid_ub y = false -> max x y = x)
     /\ (valid_ub x = false -> max x y = y).
   Proof. now intros x y; rewrite (Fmax_correct radix). Qed.
-  
+
   Lemma neg_correct :
     forall x, toX (neg x) = Xneg (toX x)
     /\ (valid_lb (neg x) = valid_ub x)
     /\ (valid_ub (neg x) = valid_lb x).
   Proof. now intro x; rewrite (Fneg_correct radix). Qed.
-  
+
   Lemma abs_correct :
     forall x, toX (abs x) = Xabs (toX x) /\ (valid_ub (abs x) = true).
   Proof. now intro x; rewrite (Fabs_correct radix). Qed.
-  
+
   Lemma rnd_binop_UP_correct op Rop :
     (forall mode p x y,
        toX (op mode p x y)
@@ -185,7 +185,7 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   intros p x y _ _; split; [easy|].
   now apply (rnd_binop_DN_correct _ _ (@Fadd_correct _)).
   Qed.
-  
+
   Lemma sub_UP_correct :
     forall p x y, valid_ub x = true -> valid_lb y = true
     -> (valid_ub (sub_UP p x y) = true
@@ -318,7 +318,7 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   case z; [exact I|intro z'; simpl].
   now apply Generic_fmt.round_UP_pt, FLX.FLX_exp_valid.
   Qed.
-  
+
   Lemma sqrt_DN_correct :
     forall p x,
     valid_lb x = true
