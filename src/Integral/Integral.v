@@ -494,8 +494,8 @@ Fixpoint integral_interval_absolute (depth : nat) (ia ib : I.type) (epsilon : F.
                  let roughEstimate_2 := est m ib in
                  match F'.le (diam roughEstimate_1) halfeps, F'.le (diam roughEstimate_2) halfeps with
                    | true,true => I.add prec roughEstimate_1 roughEstimate_2
-                   | true,false => let int2 := integral_interval_absolute n m ib (F.sub_exact epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
-                   | false,true => let int1 := integral_interval_absolute n ia m (F.sub_exact epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
+                   | true,false => let int2 := integral_interval_absolute n m ib (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
+                   | false,true => let int1 := integral_interval_absolute n ia m (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
                    | false,false =>
                      let i1 := integral_interval_absolute n ia m halfeps in
                      let i2 := integral_interval_absolute n m ib halfeps in
@@ -520,8 +520,8 @@ Fixpoint integral_interval_absolute_infty (depth : nat) (ia: I.type) (epsilon : 
                  let roughEstimate_2 := est_infty m in
                  match F'.le (diam roughEstimate_1) halfeps, F'.le (diam roughEstimate_2) halfeps with
                    | true,true => I.add prec roughEstimate_1 roughEstimate_2
-                   | true,false => let int2 := integral_interval_absolute_infty n m (F.sub_exact epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
-                   | false,true => let int1 := integral_interval_absolute n ia m (F.sub_exact epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
+                   | true,false => let int2 := integral_interval_absolute_infty n m (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
+                   | false,true => let int1 := integral_interval_absolute n ia m (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
                    | false,false =>
                      let i1 := integral_interval_absolute n ia m halfeps in
                      let i2 := integral_interval_absolute_infty n m halfeps in
@@ -547,8 +547,8 @@ Fixpoint integral_interval_absolute_sing (depth : nat) (ia: I.type) (iSing: I.ty
                  let roughEstimate_2 := est m ia in
                  match F'.le (diam roughEstimate_1) halfeps, F'.le (diam roughEstimate_2) halfeps with
                    | true,true => I.add prec roughEstimate_1 roughEstimate_2
-                   | true,false => let int2 := integral_interval_absolute n m ia (F.sub_exact epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
-                   | false,true => let int1 := integral_interval_absolute_sing n m iSing (F.sub_exact epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
+                   | true,false => let int2 := integral_interval_absolute n m ia (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
+                   | false,true => let int1 := integral_interval_absolute_sing n m iSing (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
                    | false,false =>
                      let i1 := integral_interval_absolute_sing n m iSing halfeps in
                      let i2 := integral_interval_absolute n m ia halfeps in
@@ -602,8 +602,8 @@ Lemma integral_interval_absolute_Sn {n ia ib epsilon} :
   integral_interval_absolute (S n) ia ib epsilon =
   match F'.le (diam roughEstimate_1) halfeps, F'.le (diam roughEstimate_2) halfeps with
     | true,true => I.add prec roughEstimate_1 roughEstimate_2
-    | true,false => let int2 := integral_interval_absolute n m ib (F.sub_exact epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
-    | false,true => let int1 := integral_interval_absolute n ia m (F.sub_exact epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
+    | true,false => let int2 := integral_interval_absolute n m ib (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
+    | false,true => let int1 := integral_interval_absolute n ia m (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
     | false,false =>
       let i1 := integral_interval_absolute n ia m halfeps in
       let i2 := integral_interval_absolute n m ib halfeps in
@@ -625,8 +625,8 @@ Lemma integral_interval_absolute_infty_Sn {n ia epsilon} :
   integral_interval_absolute_infty (S n) ia epsilon =
   match F'.le (diam roughEstimate_1) halfeps, F'.le (diam roughEstimate_2) halfeps with
     | true,true => I.add prec roughEstimate_1 roughEstimate_2
-    | true,false => let int2 := integral_interval_absolute_infty n m (F.sub_exact epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
-    | false,true => let int1 := integral_interval_absolute n ia m (F.sub_exact epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
+    | true,false => let int2 := integral_interval_absolute_infty n m (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
+    | false,true => let int1 := integral_interval_absolute n ia m (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
     | false,false =>
       let i1 := integral_interval_absolute n ia m halfeps in
       let i2 := integral_interval_absolute_infty n m halfeps in
@@ -649,8 +649,8 @@ Lemma integral_interval_absolute_sing_Sn {n ia iSing epsilon} :
   integral_interval_absolute_sing (S n) ia iSing epsilon =
                  match F'.le (diam roughEstimate_1) halfeps, F'.le (diam roughEstimate_2) halfeps with
                    | true,true => I.add prec roughEstimate_1 roughEstimate_2
-                   | true,false => let int2 := integral_interval_absolute n m ia (F.sub_exact epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
-                   | false,true => let int1 := integral_interval_absolute_sing n m iSing (F.sub_exact epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
+                   | true,false => let int2 := integral_interval_absolute n m ia (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_1)) in I.add prec roughEstimate_1 int2
+                   | false,true => let int1 := integral_interval_absolute_sing n m iSing (F.sub Basic.rnd_NE prec epsilon (diam roughEstimate_2)) in I.add prec int1 roughEstimate_2
                    | false,false =>
                      let i1 := integral_interval_absolute_sing n m iSing halfeps in
                      let i2 := integral_interval_absolute n m ia halfeps in
