@@ -229,14 +229,7 @@ Definition div2 x :=
 
 Definition add_UP prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    let z := (xf + yf)%float in
-    (* TODO : benchmark and see whether it would be beneficial to use
-       classify to check equality with -oo *)
-    match (z ?= neg_infinity)%float with
-    | FEq => Fprim z
-    | _ => Fprim (next_up z)
-    end
+  | Fprim xf, Fprim yf => Fprim (next_up (xf + yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.add_UP prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.add_UP prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.add_UP prec xb yb)
@@ -244,12 +237,7 @@ Definition add_UP prec x y :=
 
 Definition add_DN prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    let z := (xf + yf)%float in
-    match (z ?= infinity)%float with
-    | FEq => Fprim z
-    | _ => Fprim (next_down z)
-    end
+  | Fprim xf, Fprim yf => Fprim (next_down (xf + yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.add_DN prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.add_DN prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.add_DN prec xb yb)
@@ -257,12 +245,7 @@ Definition add_DN prec x y :=
 
 Definition sub_UP prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    let z := (xf - yf)%float in
-    match (z ?= neg_infinity)%float with
-    | FEq => Fprim z
-    | _ => Fprim (next_up z)
-    end
+  | Fprim xf, Fprim yf => Fprim (next_up (xf - yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.sub_UP prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.sub_UP prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.sub_UP prec xb yb)
@@ -270,12 +253,7 @@ Definition sub_UP prec x y :=
 
 Definition sub_DN prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    let z := (xf - yf)%float in
-    match (z ?= infinity)%float with
-    | FEq => Fprim z
-    | _ => Fprim (next_down z)
-    end
+  | Fprim xf, Fprim yf => Fprim (next_down (xf - yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.sub_DN prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.sub_DN prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.sub_DN prec xb yb)
@@ -283,12 +261,7 @@ Definition sub_DN prec x y :=
 
 Definition mul_UP prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    let z := (xf * yf)%float in
-    match (z ?= neg_infinity)%float with
-    | FEq => Fprim z
-    | _ => Fprim (next_up z)
-    end
+  | Fprim xf, Fprim yf => Fprim (next_up (xf * yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.mul_UP prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.mul_UP prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.mul_UP prec xb yb)
@@ -296,12 +269,7 @@ Definition mul_UP prec x y :=
 
 Definition mul_DN prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    let z := (xf * yf)%float in
-    match (z ?= infinity)%float with
-    | FEq => Fprim z
-    | _ => Fprim (next_down z)
-    end
+  | Fprim xf, Fprim yf => Fprim (next_down (xf * yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.mul_DN prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.mul_DN prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.mul_DN prec xb yb)
@@ -309,16 +277,7 @@ Definition mul_DN prec x y :=
 
 Definition div_UP prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    match classify yf with
-    | NaN | PInf | NInf => nan
-    | PZero | NZero | PNormal | NNormal | PSubn | NSubn =>
-      let z := (xf / yf)%float in
-      match (z ?= neg_infinity)%float with
-      | FEq => Fprim z
-      | _ => Fprim (next_up z)
-      end
-    end
+  | Fprim xf, Fprim yf => Fprim (next_up (xf / yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.div_UP prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.div_UP prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.div_UP prec xb yb)
@@ -326,16 +285,7 @@ Definition div_UP prec x y :=
 
 Definition div_DN prec x y :=
   match x, y with
-  | Fprim xf, Fprim yf =>
-    match classify yf with
-    | NaN | PInf | NInf => nan
-    | PZero | NZero | PNormal | NNormal | PSubn | NSubn =>
-      let z := (xf / yf)%float in
-      match (z ?= infinity)%float with
-      | FEq => Fprim z
-      | _ => Fprim (next_down z)
-      end
-    end
+  | Fprim xf, Fprim yf => Fprim (next_down (xf / yf))
   | Fprim xf, Fbig yb => Fbig (SFBI2.div_DN prec (prim_to_big xf) yb)
   | Fbig xb, Fprim yf => Fbig (SFBI2.div_DN prec xb (prim_to_big yf))
   | Fbig xb, Fbig yb => Fbig (SFBI2.div_DN prec xb yb)
@@ -349,12 +299,7 @@ Definition sqrt_UP prec x :=
 
 Definition sqrt_DN prec x :=
   match x with
-  | Fprim xf =>
-    let z := PrimFloat.sqrt xf in
-    match (z ?= infinity)%float with
-    | FEq => Fprim z
-    | _ => Fprim (next_down z)
-    end
+  | Fprim xf => Fprim (next_down (PrimFloat.sqrt xf))
   | Fbig xb => Fbig (SFBI2.sqrt_DN prec xb)
   end.
 
