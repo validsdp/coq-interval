@@ -36,7 +36,7 @@ Require Import Prog.
 Require Import Reify.
 Require Import Refine.
 
-Module IntervalTactic (F : FloatOps with Definition even_radix := true).
+Module IntervalTactic (F : FloatOps with Definition sensible_format := true).
 
 Inductive interval_tac_parameters : Set :=
   | i_prec (p : positive)
