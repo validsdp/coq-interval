@@ -71,8 +71,8 @@ Definition Z2P x :=
   end.
 
 Definition c1 := F.one.
-Definition c2 := F.fromZ_UP 2.  (* TODO : fix *)
-Definition c3 := F.fromZ_UP 3.  (* TODO : fix *)
+Definition c2 := F.fromZ 2.
+Definition c3 := F.fromZ 3.
 Definition i1 := I.fromZ 1.
 Definition i2 := I.fromZ 2.
 Definition i3 := I.fromZ 3.
@@ -171,7 +171,6 @@ Definition atan_fast0 prec xi :=
   I.mul prec (I.sub prec i1 rem) xi.
 
 Definition pi4_gen prec :=
-  let s2 := F.ZtoS 2 in
   I.sub prec
    (I.mul2 prec (I.mul2 prec (atan_fast0 prec (I.inv prec (I.fromZ 5)))))
    (atan_fast0 prec (I.inv prec (I.fromZ 239))).

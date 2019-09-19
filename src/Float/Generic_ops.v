@@ -332,25 +332,30 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
 
   Definition fromZ_UP := fromZ.
 
-  Lemma fromZ_correct : forall n, FtoX (fromZ n) = Xreal (IZR n).
+  Lemma fromZ_correct' : forall n, FtoX (fromZ n) = Xreal (IZR n).
   Proof.
   intros. case n ; split.
-  Qed.
-
-  Lemma fromZ_DN_correct :
-    forall n,
-    valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
-  Proof.
-  now intro n; split; [|rewrite fromZ_correct; right].
   Qed.
 
   Lemma fromZ_UP_correct :
     forall n,
     valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
   Proof.
-  now intro n; split; [|rewrite fromZ_correct; right].
+  now intro n; split; [|rewrite fromZ_correct'; right].
   Qed.
-  
+
+  Lemma fromZ_DN_correct :
+    forall n,
+    valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+  Proof.
+  now intro n; split; [|rewrite fromZ_correct'; right].
+  Qed.
+
+  Lemma fromZ_correct :
+    forall n, sensible_format = true ->
+    (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
+  Proof. intros n _ _; apply fromZ_correct'. Qed.
+
   Lemma cmp_correct :
     forall x y,
     toX x = Xreal (toR x) ->

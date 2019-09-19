@@ -64,9 +64,9 @@ Definition fromZ x :=
   let i := (bigZ_of_int m * 2 ^ (bigZ_of_int e - BigZ.of_Z FloatOps.shift))%bigZ in
   if (BigZ.of_Z x =? i)%bigZ then Fprim f else Fbig (SFBI2.fromZ x).
 
-Definition fromZ_DN := fromZ.
-
 Definition fromZ_UP := fromZ.
+
+Definition fromZ_DN := fromZ.
 
 Definition Z_size m :=
   match m with
@@ -219,13 +219,13 @@ Definition scale x e :=
   | Fprim f =>
     match e with
     | BigZ.Pos (BigN.N0 e') =>
-      let r := ldshiftexp f (e' + shift)%int63 in
-      let f' := ldshiftexp r (-e' + shift)%int63 in
+      let r := ldshiftexp f (e' + Int63.of_Z FloatOps.shift)%int63 in
+      let f' := ldshiftexp r (-e' + Int63.of_Z FloatOps.shift)%int63 in
       if (f == f')%float then Fprim r
       else Fbig (SFBI2.scale (prim_to_big f) e)
     | BigZ.Neg (BigN.N0 e') =>
-      let r := ldshiftexp f (-e' + shift)%int63 in
-      let f' := ldshiftexp r (e' + shift)%int63 in
+      let r := ldshiftexp f (-e' + Int63.of_Z FloatOps.shift)%int63 in
+      let f' := ldshiftexp r (e' + Int63.of_Z FloatOps.shift)%int63 in
       if (f == f')%float then Fprim r
       else Fbig (SFBI2.scale (prim_to_big f) e)
     | _ => Fbig (SFBI2.scale (prim_to_big f) e)
@@ -348,15 +348,21 @@ Proof. reflexivity. Qed.
 
 (* From ValidSDP Require Import FlocqNativeLayer. *)
 
-Lemma fromZ_DN_correct :
-  forall n,
-  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+Lemma fromZ_correct :
+  forall n, sensible_format = true ->
+  (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
 Proof.
 Admitted.
 
 Lemma fromZ_UP_correct :
   forall n,
   valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+Proof.
+Admitted.
+
+Lemma fromZ_DN_correct :
+  forall n,
+  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
 Proof.
 Admitted.
 

@@ -47,8 +47,9 @@ Parameter incr_prec : precision -> positive -> precision.
 Parameter zero : type.
 Parameter one : type.
 Parameter nan : type.
-Parameter fromZ_DN : Z -> type.
+Parameter fromZ : Z -> type.
 Parameter fromZ_UP : Z -> type.
+Parameter fromZ_DN : Z -> type.
 Parameter fromF : float radix -> type.
 Parameter real : type -> bool.
 Parameter mag : type -> sfactor.
@@ -80,13 +81,17 @@ Parameter zero_correct : toX zero = Xreal 0.
 Parameter one_correct : toX one = Xreal 1.
 Parameter nan_correct : toX nan = Xnan.
 
-Parameter fromZ_DN_correct :
-  forall n,
-  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+Parameter fromZ_correct :
+  forall n, sensible_format = true ->
+  (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
 
 Parameter fromZ_UP_correct :
   forall n,
   valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+
+Parameter fromZ_DN_correct :
+  forall n,
+  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
 
 Parameter real_correct :
   forall f,

@@ -32,8 +32,8 @@ Module T := TranscendentalFloatFast F.
 Include FloatInterval F.
 
 Definition c1 := F.one.
-Definition cm1 := F.fromZ_UP (-1).  (* TODO fix *)
-Definition c3 := F.fromZ_UP 3.  (* TODO fix *)
+Definition cm1 := F.fromZ (-1).
+Definition c3 := F.fromZ 3.
 
 Definition pi prec :=
   mul2 prec (mul2 prec (T.pi4 prec)).
@@ -60,11 +60,11 @@ Definition cos prec xi :=
   | Ibnd xl xu =>
     if F'.le' xu xl then T.cos_fast prec xl else
     let pi4 := T.pi4 prec in
-    if F'.le' xu (F.mul_DN prec (lower pi4) (F.fromZ_UP 4)) then
+    if F'.le' xu (F.mul_DN prec (lower pi4) (F.fromZ 4)) then
       bnd (lower (T.cos_fast prec xu)) (upper (T.cos_fast prec xl))
     else
-      if F'.le' xu (F.mul_DN prec (lower pi4) (F.fromZ_UP 8)) then
-        if F'.le' (F.mul_UP prec (upper pi4) (F.fromZ_UP 4)) xl then
+      if F'.le' xu (F.mul_DN prec (lower pi4) (F.fromZ 8)) then
+        if F'.le' (F.mul_UP prec (upper pi4) (F.fromZ 4)) xl then
           bnd (lower (T.cos_fast prec xl)) (upper (T.cos_fast prec xu))
         else
           bnd cm1 (F.max (upper (T.cos_fast prec xl)) (upper (T.cos_fast prec xu)))
@@ -311,7 +311,7 @@ Definition sin prec xi :=
   | Ibnd xl xu =>
     if F'.le' xu xl then T.sin_fast prec xl else
     let pi4 := T.pi4 prec in
-    let pi2 := F.mul_DN prec (lower pi4) (F.fromZ_UP 2) in
+    let pi2 := F.mul_DN prec (lower pi4) (F.fromZ 2) in
     match F'.le' (F.neg pi2) xl, F'.le' xu pi2 with
     | true, true =>
       bnd (lower (T.sin_fast prec xl)) (upper (T.sin_fast prec xu))
@@ -459,7 +459,7 @@ Definition tan prec xi :=
   match xi with
   | Ibnd xl xu =>
     if F'.le' xu xl then T.tan_fast prec xl else
-    let pi2 := F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ_UP 2) in
+    let pi2 := F.mul_DN prec (lower (T.pi4 prec)) (F.fromZ 2) in
     match F'.lt' (F.neg pi2) xl, F'.lt' xu pi2 with
     | true, true =>
       bnd (lower (T.tan_fast prec xl)) (upper (T.tan_fast prec xu))
@@ -574,9 +574,9 @@ Definition atan prec xi :=
   | Ibnd xl xu =>
     Ibnd
      (if F.real xl then lower (T.atan_fast prec xl)
-      else F.neg (F.mul_UP prec (upper (T.pi4 prec)) (F.fromZ_UP 2)))
+      else F.neg (F.mul_UP prec (upper (T.pi4 prec)) (F.fromZ 2)))
      (if F.real xu then upper (T.atan_fast prec xu)
-      else F.mul_UP prec (upper (T.pi4 prec)) (F.fromZ_UP 2))
+      else F.mul_UP prec (upper (T.pi4 prec)) (F.fromZ 2))
   | Inan => Inan
   end.
 

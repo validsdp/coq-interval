@@ -136,12 +136,12 @@ Proof. now simpl. Qed.
 
 Definition fromZ n := Float (ZtoM n) exponent_zero.
 
-Definition fromZ_DN := fromZ.
-
 Definition fromZ_UP := fromZ.
 
-Lemma fromZ_correct :
-  forall n, toX (fromZ n) = Xreal (IZR n).
+Definition fromZ_DN := fromZ.
+
+Lemma fromZ_correct' :
+  forall n, FtoX (toF (fromZ n)) = Xreal (IZR n).
 Proof.
 intros.
 unfold toX. simpl.
@@ -156,14 +156,14 @@ Qed.
 
 Lemma one_correct :
   toX one = Xreal 1.
-Proof. now unfold one; fold (fromZ 1); rewrite fromZ_correct. Qed.
+Proof. now unfold one; fold (fromZ 1); unfold toX; rewrite fromZ_correct'. Qed.
 
 Lemma fromZ_DN_correct :
   forall n,
   valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
 Proof.
 intro n; split; [now simpl|].
-rewrite <- fromZ_correct; unfold toX, le_lower, le_upper, fromZ_DN.
+rewrite <- fromZ_correct'; unfold toX, le_lower, le_upper, fromZ_DN.
 now case (- _)%XR; [|intros n'; right].
 Qed.
 
@@ -172,9 +172,14 @@ Lemma fromZ_UP_correct :
   valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
 Proof.
 intro n; split; [now simpl|].
-rewrite <- fromZ_correct; unfold toX, le_upper, fromZ_UP.
+rewrite <- fromZ_correct'; unfold toX, le_upper, fromZ_UP.
 now case (FtoX _); [|intros n'; right].
 Qed.
+
+Lemma fromZ_correct :
+  forall n, sensible_format = true ->
+  (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
+Proof. intros n _ _; apply fromZ_correct'. Qed.
 
 Lemma match_helper_1 :
   forall A B y2, forall f : A -> B,
