@@ -335,10 +335,8 @@ Definition abs xi :=
 Definition mul2 prec xi :=
   match xi with
   | Ibnd xl xu =>
-    let two := F.fromZ_UP 2 in  (* TODO: eval *compute in? *)
-    let xl' := F.mul_DN prec xl two in
-    let xu' := F.mul_UP prec xu two in
-    if F.valid_lb xl' && F.valid_ub xu' then Ibnd xl' xu' else Ibnd F.nan F.nan
+    let c2 := F.fromZ 2 in  (* TODO: eval *compute in? *)
+    Ibnd (F.mul_DN prec xl c2) (F.mul_UP prec xu c2)
   | Inan => Inan
   end.
 
@@ -1758,24 +1756,40 @@ Theorem mul2_correct :
   contains (convert xi) x ->
   contains (convert (mul2 prec xi)) (Xmul x (Xreal 2)).
 Proof.
-intros prec [ | xl xu].
-split.
-Admitted.
-(* intros [ | x] d Hx; [now revert Hx; unfold convert; case (_ && _)|]. *)
-(* unfold convert in Hx; revert Hx. *)
-(* case_eq (F.valid_lb xl); [|intros _ [H0 H1]; exfalso; lra]. *)
-(* case_eq (F.valid_ub xu); [|intros _ _ [H0 H1]; exfalso; lra]. *)
-(* intros Vxu Vxl (Hxl, Hxu). *)
-(* unfold convert, scale2. *)
-(* set (c := _ && _). *)
-(* case_eq c. *)
-(* { unfold c; intro Hc; rewrite Hc. *)
-(*   rewrite 2!F.scale2_correct by easy. *)
-(*   split ; xreal_tac2 ; simpl ; *)
-(*     ( apply Rmult_le_compat_r ; *)
-(*       [ (apply Rlt_le ; apply bpow_gt_0) | assumption ] ). } *)
-(* now intros _; rewrite F.valid_lb_nan, F.valid_ub_nan, F.nan_correct; split. *)
-(* Qed. *)
+intros prec [ | xl xu]; [easy|].
+intros [|x]; unfold convert; [now case (_ && _)|].
+case_eq (F.valid_lb xl); [|intros _ [H0 H1]; exfalso; lra].
+case_eq (F.valid_ub xu); [|intros _ _ [H0 H1]; exfalso; lra].
+intros Vxu Vxl [Hxl Hxu].
+simpl.
+elim (F.mul_DN_correct prec xl (F.fromZ 2)); [intros Vl Hl; rewrite Vl|].
+{ elim (F.mul_UP_correct prec xu (F.fromZ 2)); [intros Vu Hu; rewrite Vu|].
+  { split.
+    { xreal_tac2.
+      revert Hl; rewrite F.fromZ_correct; [|easy..].
+      unfold le_lower, le_upper; simpl.
+      now xreal_tac2; simpl; [|lra]. }
+    xreal_tac2.
+    revert Hu; rewrite F.fromZ_correct; [|easy..].
+    unfold le_upper.
+    now xreal_tac2; simpl; [|lra]. }
+  rewrite Vxu.
+  rewrite (F.valid_ub_correct (F.fromZ 2));
+    [|now rewrite F.real_correct, F.fromZ_correct].
+  rewrite F.fromZ_correct; [|easy..].
+  xreal_tac2; [now left; repeat split; lra|].
+  case (Rlt_or_le 0 r); intro Hr.
+  { left; repeat split; lra. }
+  do 2 right; left; lra. }
+rewrite Vxl.
+rewrite (F.valid_ub_correct (F.fromZ 2));
+  [|now rewrite F.real_correct, F.fromZ_correct].
+rewrite F.fromZ_correct; [|easy..].
+xreal_tac2; [now do 3 right; repeat split; lra|].
+case (Rlt_or_le 0 r); intro Hr.
+{ left; repeat split; lra. }
+do 3 right; repeat split; lra.
+Qed.
 
 Theorem add_correct :
   forall prec,
