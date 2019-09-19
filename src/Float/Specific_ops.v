@@ -79,7 +79,6 @@ Definition incr_prec x y := exponent_add x (ZtoE (Zpos y)).
 Definition zero := Float mantissa_zero exponent_zero.
 Definition one := Float (ZtoM 1) exponent_zero.
 Definition nan := @Fnan smantissa_type exponent_type.
-Definition nan_correct := refl_equal Xnan.
 
 Lemma zero_correct :
   toX zero = Xreal 0.
@@ -103,7 +102,16 @@ Definition mag (x : type) :=
     end
   end.
 
+Definition classify (f : type) :=
+  match f with Fnan => Sig.Fnan | _ => Sig.Freal end.
+
+Definition nan_correct := refl_equal Sig.Fnan.
+
 Definition real (f : type) := match f with Fnan => false | _ => true end.
+
+Lemma classify_correct :
+  forall f, real f = match classify f with Freal => true | _ => false end.
+Proof. now intro f; case f. Qed.
 
 Lemma real_correct :
   forall f, real f = match toX f with Xnan => false | _ => true end.
@@ -121,18 +129,12 @@ Definition valid_ub (_ : type) := true.
 Definition valid_lb (_ : type) := true.
 
 Lemma valid_lb_correct :
-  forall f, real f = true -> valid_lb f = true.
-Proof. now simpl. Qed.
+  forall f, valid_lb f = match classify f with Fpinfty => false | _ => true end.
+Proof. now intro f; case f. Qed.
 
 Lemma valid_ub_correct :
-  forall f, real f = true -> valid_ub f = true.
-Proof. now simpl. Qed.
-
-Lemma valid_lb_nan : valid_lb nan = true.
-Proof. now simpl. Qed.
-
-Lemma valid_ub_nan : valid_ub nan = true.
-Proof. now simpl. Qed.
+  forall f, valid_ub f = match classify f with Fminfty => false | _ => true end.
+Proof. now intro f; case f. Qed.
 
 Definition fromZ n := Float (ZtoM n) exponent_zero.
 

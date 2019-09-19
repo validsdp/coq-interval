@@ -89,10 +89,22 @@ Definition fromF f :=
     else Fbig (SFBI2.fromF f)
   end.
 
-Definition real x :=
+Definition classify x :=
   match x with
   | Fprim f =>
     match classify f with
+    | NaN => Sig.Fnan
+    | PInf => Fpinfty
+    | NInf => Fminfty
+    | _ => Freal
+    end
+  | Fbig f => if SFBI2.real f then Freal else Sig.Fnan
+  end.
+
+Definition real x :=
+  match x with
+  | Fprim f =>
+    match PrimFloat.classify f with
     | PInf | NInf | NaN => false
     | _ => true
     end
@@ -343,7 +355,7 @@ Admitted.
 (* cette preuve ne passe pas au Qed, à regerder *)
 (* now compute; rewrite Rinv_r; [unfold IZR, IPR|lra]. Qed. *)
 
-Lemma nan_correct : toX nan = Xnan.
+Lemma nan_correct : classify nan = Sig.Fnan.
 Proof. reflexivity. Qed.
 
 (* From ValidSDP Require Import FlocqNativeLayer. *)
@@ -366,27 +378,23 @@ Lemma fromZ_DN_correct :
 Proof.
 Admitted.
 
+Lemma classify_correct :
+  forall f, real f = match classify f with Freal => true | _ => false end.
+Proof.
+Admitted.
+
 Lemma real_correct :
-  forall f,
-  real f = match toX f with Xnan => false | _ => true end.
+  forall f, real f = match toX f with Xnan => false | _ => true end.
 Proof.
 Admitted.
 
 Lemma valid_lb_correct :
-  forall f, real f = true -> valid_lb f = true.
+  forall f, valid_lb f = match classify f with Fpinfty => false | _ => true end.
 Proof.
 Admitted.
 
 Lemma valid_ub_correct :
-  forall f, real f = true -> valid_ub f = true.
-Proof.
-Admitted.
-
-Lemma valid_lb_nan : valid_lb nan = true.
-Proof.
-Admitted.
-
-Lemma valid_ub_nan : valid_ub nan = true.
+  forall f, valid_ub f = match classify f with Fminfty => false | _ => true end.
 Proof.
 Admitted.
 
