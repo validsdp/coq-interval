@@ -111,6 +111,16 @@ Definition real x :=
   | Fbig f => SFBI2.real f
   end.
 
+Definition is_nan x :=
+  match x with
+  | Fprim f =>
+    match PrimFloat.classify f with
+    | NaN => true
+    | _ => false
+    end
+  | Fbig f => negb (SFBI2.real f)
+  end.
+
 Definition mag x :=
   match x with
   | Fprim f => SFBI2.mag (prim_to_big f)
@@ -388,6 +398,11 @@ Lemma real_correct :
 Proof.
 Admitted.
 
+Lemma is_nan_correct :
+  forall f, is_nan f = match classify f with Sig.Fnan => true | _ => false end.
+Proof.
+Admitted.
+
 Lemma valid_lb_correct :
   forall f, valid_lb f = match classify f with Fpinfty => false | _ => true end.
 Proof.
@@ -408,30 +423,36 @@ Admitted.
 
 Lemma min_correct :
   forall x y,
-    ((valid_lb x = true \/ valid_lb y = true)
-     -> (valid_lb (min x y) = true /\ toX (min x y) = Xmin (toX x) (toX y)))
-    /\ (valid_ub x = true -> valid_ub y = true
-       -> (valid_ub (min x y) = true /\ toX (min x y) = Xmin (toX x) (toX y)))
-    /\ (valid_lb y = false -> min x y = x)
-    /\ (valid_lb x = false -> min x y = y).
+  match classify x, classify y with
+  | Sig.Fnan, _ | _, Sig.Fnan => classify (min x y) = Sig.Fnan
+  | Fminfty, _ | _, Fminfty => classify (min x y) = Fminfty
+  | Fpinfty, _ => min x y = y
+  | _, Fpinfty => min x y = x
+  | Freal, Freal => toX (min x y) = Xmin (toX x) (toX y)
+  end.
 Proof.
 Admitted.
 
 Lemma max_correct :
   forall x y,
-    ((valid_ub x = true \/ valid_ub y = true)
-     -> (valid_ub (max x y) = true /\ toX (max x y) = Xmax (toX x) (toX y)))
-    /\ (valid_lb x = true -> valid_lb y = true
-       -> (valid_lb (max x y) = true /\ toX (max x y) = Xmax (toX x) (toX y)))
-    /\ (valid_ub y = false -> max x y = x)
-    /\ (valid_ub x = false -> max x y = y).
+  match classify x, classify y with
+  | Sig.Fnan, _ | _, Sig.Fnan => classify (max x y) = Sig.Fnan
+  | Fpinfty, _ | _, Fpinfty => classify (max x y) = Fpinfty
+  | Fminfty, _ => max x y = y
+  | _, Fminfty => max x y = x
+  | Freal, Freal => toX (max x y) = Xmax (toX x) (toX y)
+  end.
 Proof.
 Admitted.
 
 Lemma neg_correct :
-  forall x, toX (neg x) = Xneg (toX x)
-    /\ (valid_lb (neg x) = valid_ub x)
-    /\ (valid_ub (neg x) = valid_lb x).
+  forall x,
+  match classify x with
+  | Freal => toX (neg x) = Xneg (toX x)
+  | Sig.Fnan => classify (neg x) = Sig.Fnan
+  | Fminfty => classify (neg x) = Fpinfty
+  | Fpinfty => classify (neg x) = Fminfty
+  end.
 Proof.
 Admitted.
 
