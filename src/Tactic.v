@@ -315,10 +315,13 @@ unfold compute_inputs.
 destruct R.merge_hyps as [|vi t].
 easy.
 simpl in H' |- *.
-rewrite I.lower_correct, I.upper_correct.
-Admitted.
-(* now destruct I.convert. *)
-(* Qed. *)
+destruct H' as [H' H''].
+rewrite I.lower_correct; [|now exists var0].
+rewrite I.upper_correct; [|now exists var0].
+revert H'; case vi => [|l u].
+{ now simpl; rewrite F'.valid_lb_nan, F'.valid_ub_nan. }
+now simpl; case (_ && _)%bool.
+Qed.
 
 Definition eval_bisect prec depth hyps prog consts g :=
   let bounds := compute_inputs prec hyps consts in
