@@ -103,15 +103,15 @@ Definition valid_ub x := negb (x == neg_infinity)%float.
 
 Definition valid_lb x := negb (x == infinity)%float.
 
-Definition comparison_of_float_comparison c :=
+Definition Xcomparison_of_float_comparison c :=
   match c with
-  | FEq => Eq
-  | FLt => Lt
-  | FGt => Gt
-  | FNotComparable => Eq
+  | FEq => Xeq
+  | FLt => Xlt
+  | FGt => Xgt
+  | FNotComparable => Xund
   end.
 
-Definition cmp x y := comparison_of_float_comparison (compare x y).
+Definition cmp x y := Xcomparison_of_float_comparison (compare x y).
 
 Definition min x y :=
   match (x ?= y)%float with
@@ -230,9 +230,17 @@ Admitted.
 
 Lemma cmp_correct :
   forall x y,
-  toX x = Xreal (toR x) ->
-  toX y = Xreal (toR y) ->
-  cmp x y = Rcompare (toR x) (toR y).
+  cmp x y =
+  match classify x, classify y with
+  | Sig.Fnan, _ | _, Sig.Fnan => Xund
+  | Fminfty, Fminfty => Xeq
+  | Fminfty, _ => Xlt
+  | _, Fminfty => Xgt
+  | Fpinfty, Fpinfty => Xeq
+  | _, Fpinfty => Xlt
+  | Fpinfty, _ => Xgt
+  | Freal, Freal => Xcmp (toX x) (toX y)
+  end.
 Proof.
 Admitted.
 
