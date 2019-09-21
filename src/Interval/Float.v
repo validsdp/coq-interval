@@ -1644,14 +1644,12 @@ Proof.
 intros [ | xl xu] [ | x] ; simpl ; trivial; [now case (_ && _)|].
 case_eq (F.valid_lb xl); [|intros _ [H0 H1]; exfalso; lra].
 case_eq (F.valid_ub xu); [|intros _ _ [H0 H1]; exfalso; lra].
-intros Vu Vl.
-elim (F'.neg_correct xl); intros Hl [_ Hl'].
-elim (F'.neg_correct xu); intros Hu [Hu' _].
-rewrite Hl', Vl, Hu', Vu, Hl, Hu.
-intros (Hxl, Hxu).
-split ;
+intros Vu Vl (Hxl, Hxu).
+rewrite F'.valid_lb_neg, F'.valid_ub_neg, Vu, Vl.
+rewrite !F'.neg_correct.
+now split ;
   [ xreal_tac xu | xreal_tac xl ] ;
-  apply Ropp_le_contravar ; assumption.
+  apply Ropp_le_contravar.
 Qed.
 
 Theorem neg_correct' :
@@ -1661,9 +1659,7 @@ Theorem neg_correct' :
 Proof.
 intros [|xl xu] [|x] ; try easy ;
   unfold convert ; simpl ;
-  rewrite (proj1 (proj2 (F'.neg_correct _))) ;
-  rewrite (proj2 (proj2 (F'.neg_correct _))) ;
-  rewrite !(proj1 (F'.neg_correct _)) ;
+  rewrite F'.valid_lb_neg, F'.valid_ub_neg, !F'.neg_correct ;
   [now case (_ && _)|].
 rewrite andb_comm; case (_ && _); [|simpl; lra].
 destruct (F.toX xl) as [|xl'] ;
@@ -1711,8 +1707,6 @@ assert (Vxu : F.valid_ub xu = true).
 revert Hx; unfold convert; rewrite Vxu.
 case_eq (F.valid_lb xl); [|now intros _ [H0 H1]; exfalso; lra].
 intros Vxl [Hxl Hxu].
-generalize (F'.neg_correct xl).
-intros [Hn [Hnl Hnu]].
 generalize (F.max_correct (F.neg xl) xu).
 generalize (F.real_correct xu) ;
   generalize (F.classify_correct xu) ;
@@ -1721,7 +1715,8 @@ generalize (F.real_correct xu) ;
     [xreal_tac xu; [easy|intros _]|xreal_tac xu; [intros _|easy]..] ;
   ( generalize (F.real_correct (F.neg xl)) ;
     generalize (F.classify_correct (F.neg xl)) ;
-    generalize Vxl ; rewrite Hn, <-Hnu, F.valid_ub_correct ;
+    generalize Vxl ;
+    rewrite F'.neg_correct, <-F'.valid_ub_neg, F.valid_ub_correct ;
     ( case (F.classify (F.neg xl)); try easy; intros _ H; rewrite H; clear H ) ;
       [xreal_tac xl; [easy|intros _]|xreal_tac xl; [intros _|easy]..] ) ;
   simpl ;
@@ -1767,12 +1762,12 @@ case_eq (F.toX xl) ; case_eq (F.toX xu).
 { simpl.
   intros ru Hu _.
   case Rcompare_spec ; simpl ; intros H.
-  { rewrite (proj1 (F'.neg_correct _)), Hu.
+  { rewrite F'.neg_correct, Hu.
     simpl.
     rewrite <- Ropp_0.
     apply Ropp_le_contravar.
     now apply Rlt_le. }
-  { rewrite (proj1 (F'.neg_correct _)), Hu.
+  { rewrite F'.neg_correct, Hu.
     rewrite H.
     simpl.
     rewrite Ropp_0.
@@ -1792,7 +1787,7 @@ intros ru Hu rl Hl.
 simpl.
 case Rcompare_spec ; simpl ; intros H1 ;
   case Rcompare_spec ; simpl ; intros H2 ;
-    try rewrite (proj1 (F'.neg_correct _)) ;
+    try rewrite F'.neg_correct ;
     try rewrite F.zero_correct ;
     try apply Rle_refl ;
     rewrite ?Hl, ?Hu.
@@ -2888,9 +2883,7 @@ case (sign_large_ xl xu) ; intros Hx0 ; simpl in Hx0.
                 prec _ n (proj2 (F.abs_correct xl)) Hxl_pos).
   generalize (Fpower_pos_dn_correct prec _ n Hxu_pos).
   destruct n as [n|n|].
-  { rewrite !(proj1 (F'.neg_correct _)).
-    rewrite (proj1 (proj2 (F'.neg_correct _))).
-    rewrite (proj2 (proj2 (F'.neg_correct _))).
+  { rewrite !F'.neg_correct, F'.valid_lb_neg, F'.valid_ub_neg.
     intros (Vpow_DN, Hpow_DN) (Vpow_UP, Hpow_UP).
     rewrite Vpow_UP, Vpow_DN.
     split.
@@ -3025,8 +3018,7 @@ destruct n as [n|n|].
   generalize (Fpower_pos_up_correct
                 prec _ n~1 (proj2 (F.abs_correct xl)) Hxl_pos).
   generalize (Fpower_pos_up_correct prec _ n~1 Vxu Hxu_pos).
-  rewrite (proj1 (F'.neg_correct _)).
-  rewrite (proj1 (proj2 (F'.neg_correct _))).
+  rewrite F'.neg_correct, F'.valid_lb_neg.
   intros (Vpow_DN, Hpow_DN) (Vpow_UP, Hpow_UP).
   rewrite Vpow_UP, Vpow_DN.
   split.
