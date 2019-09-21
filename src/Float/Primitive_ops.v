@@ -11,15 +11,12 @@ Require Import Specific_bigint.
 Require Import Specific_ops.
 Module SFBI2 := SpecificFloat BigIntRadix2.
 
-Module PrimOrBigFloat <: FloatOps.
+Module PrimitiveFloat <: FloatOps.
 
 Definition radix := radix2.
 Definition sensible_format := true.
 
-Variant sum_type :=
-  | Fprim : PrimFloat.float -> sum_type
-  | Fbig : SFBI2.type -> sum_type.
-Definition type := sum_type.
+Definition type := PrimFloat.float.
 
 Definition bigZ_of_int x := BigZ.Pos (BigN.N0 x).
 
@@ -39,11 +36,7 @@ Definition prim_to_big (x : PrimFloat.float) : SFBI2.type :=
     Float (- m)%bigZ e
   end.
 
-Definition toF x :=
-  match x with
-  | Fprim f => SFBI2.toF (prim_to_big f)
-  | Fbig f => SFBI2.toF f
-  end.
+Definition toF x := SFBI2.toF (prim_to_big x).
 
 Definition precision := SFBI2.precision.
 Definition sfactor := SFBI2.sfactor.
@@ -53,29 +46,24 @@ Definition ZtoS := SFBI2.ZtoS.
 Definition StoZ := SFBI2.StoZ.
 Definition incr_prec := SFBI2.incr_prec.
 
-Definition zero := Fprim zero.
-Definition one := Fprim one.
-Definition nan := Fbig Fnan.
+Definition zero := zero.
+Definition one := one.
+Definition nan := nan.
 
-Definition fromZ x :=
+Definition fromZ_default default x :=
   let f := of_int63 (Int63.of_Z x) in
   let (m, e) := frshiftexp f in
   let m := normfr_mantissa m in
   let i := (bigZ_of_int m * 2 ^ (bigZ_of_int e - BigZ.of_Z FloatOps.shift))%bigZ in
-  if (BigZ.of_Z x =? i)%bigZ then Fprim f else Fbig (SFBI2.fromZ x).
+  if (BigZ.of_Z x =? i)%bigZ then f else default.
 
-Definition fromZ_UP := fromZ.
+Definition fromZ := fromZ_default nan.
 
-Definition fromZ_DN := fromZ.
+Definition fromZ_UP := fromZ_default infinity.
 
-Definition Z_size m :=
-  match m with
-  | Zpos p => Pos.size p
-  | Z0 => 1%positive
-  | Zneg p => Pos.size p
-  end.
+Definition fromZ_DN := fromZ_default neg_infinity.
 
-Definition fromF f :=
+Definition fromF (f : float radix) :=
   match f with
   | Basic.Fnan => nan
   | Basic.Fzero => zero
@@ -85,67 +73,35 @@ Definition fromF f :=
       let m := of_int63 (Int63.of_pos m) in
       let e := Int63.of_Z (e + FloatOps.shift) in
       let f := ldshiftexp m e in
-      if s then Fprim (- f)%float else Fprim f
-    else Fbig (SFBI2.fromF f)
+      if s then (- f)%float else f
+    else nan
   end.
 
 Definition classify x :=
-  match x with
-  | Fprim f =>
-    match classify f with
-    | NaN => Sig.Fnan
-    | PInf => Fpinfty
-    | NInf => Fminfty
-    | _ => Freal
-    end
-  | Fbig f => if SFBI2.real f then Freal else Sig.Fnan
+  match classify x with
+  | NaN => Sig.Fnan
+  | PInf => Fpinfty
+  | NInf => Fminfty
+  | _ => Freal
   end.
 
 Definition real x :=
-  match x with
-  | Fprim f =>
-    match PrimFloat.classify f with
-    | PInf | NInf | NaN => false
-    | _ => true
-    end
-  | Fbig f => SFBI2.real f
+  match PrimFloat.classify x with
+  | PInf | NInf | NaN => false
+  | _ => true
   end.
 
 Definition is_nan x :=
-  match x with
-  | Fprim f =>
-    match PrimFloat.classify f with
-    | NaN => true
-    | _ => false
-    end
-  | Fbig f => negb (SFBI2.real f)
+  match PrimFloat.classify x with
+  | NaN => true
+  | _ => false
   end.
 
-Definition mag x :=
-  match x with
-  | Fprim f => SFBI2.mag (prim_to_big f)
-  | Fbig f => SFBI2.mag f
-  end.
+Definition mag x := SFBI2.mag (prim_to_big x).
 
-Definition valid_ub x :=
-  match x with
-  | Fprim f =>
-    match (f ?= neg_infinity)%float with
-    | FEq => false
-    | _ => true
-    end
-  | Fbig f => true
-  end.
+Definition valid_ub x := negb (x == neg_infinity)%float.
 
-Definition valid_lb x :=
-  match x with
-  | Fprim f =>
-    match (f ?= infinity)%float with
-    | FEq => false
-    | _ => true
-    end
-  | Fbig f => true
-  end.
+Definition valid_lb x := negb (x == infinity)%float.
 
 Definition comparison_of_float_comparison c :=
   match c with
@@ -155,202 +111,62 @@ Definition comparison_of_float_comparison c :=
   | FNotComparable => Eq
   end.
 
-Definition cmp x y :=
-  match x, y with
-  | Fprim x, Fprim y => comparison_of_float_comparison (compare x y)
-  | Fprim x, Fbig y => SFBI2.cmp (prim_to_big x) y
-  | Fbig x, Fprim y => SFBI2.cmp x (prim_to_big y)
-  | Fbig x, Fbig y => SFBI2.cmp x y
+Definition cmp x y := comparison_of_float_comparison (compare x y).
+
+Definition min x y :=
+  match (x ?= y)%float with
+  | FEq | FLt => x
+  | FGt => y
+  | FNotComparable => nan
   end.
 
-Definition min' x y :=
-  match x, y with
-  | Fprim xf, Fprim yf =>
-    match compare xf yf with
-    | FEq | FLt => x
-    | FGt => y
-    | FNotComparable => nan
-    end
-  | Fprim xf, Fbig yb =>
-    match SFBI2.cmp (prim_to_big xf) yb with
-    | Eq | Lt => x
-    | Gt => y
-    end
-  | Fbig xb, Fprim yf =>
-    match SFBI2.cmp xb (prim_to_big yf) with
-    | Lt => x
-    | Eq | Gt => y
-    end
-  | Fbig xb, Fbig yb =>
-    match SFBI2.cmp xb yb with
-    | Eq | Lt => x
-    | Gt => y
-    end
+Definition max x y :=
+  match (x ?= y)%float with
+  | FEq | FGt => x
+  | FLt => y
+  | FNotComparable => nan
   end.
 
-Definition min x y := if (real x && real y)%bool then min' x y else nan.
+Definition neg x := (- x)%float.
 
-Definition max' x y :=
-  match x, y with
-  | Fprim xf, Fprim yf =>
-    match compare xf yf with
-    | FEq | FGt => x
-    | FLt => y
-    | FNotComparable => nan
-    end
-  | Fprim xf, Fbig yb =>
-    match SFBI2.cmp (prim_to_big xf) yb with
-    | Eq | Gt => x
-    | Lt => y
-    end
-  | Fbig xb, Fprim yf =>
-    match SFBI2.cmp xb (prim_to_big yf) with
-    | Gt => x
-    | Eq | Lt => y
-    end
-  | Fbig xb, Fbig yb =>
-    match SFBI2.cmp xb yb with
-    | Eq | Gt => x
-    | Lt => y
-    end
-  end.
-
-Definition max x y := if (real x && real y)%bool then max' x y else nan.
-
-Definition neg x :=
-  match x with
-  | Fprim f => Fprim (- f)%float
-  | Fbig f => Fbig (SFBI2.neg f)
-  end.
-
-Definition abs x :=
-  match x with
-  | Fprim f => Fprim (abs f)
-  | Fbig f => Fbig (SFBI2.abs f)
-  end.
+Definition abs x := abs x.
 
 Definition scale x e :=
-  match x with
-  | Fprim f =>
-    match e with
-    | BigZ.Pos (BigN.N0 e') =>
-      let r := ldshiftexp f (e' + Int63.of_Z FloatOps.shift)%int63 in
-      let f' := ldshiftexp r (-e' + Int63.of_Z FloatOps.shift)%int63 in
-      if (f == f')%float then Fprim r
-      else Fbig (SFBI2.scale (prim_to_big f) e)
-    | BigZ.Neg (BigN.N0 e') =>
-      let r := ldshiftexp f (-e' + Int63.of_Z FloatOps.shift)%int63 in
-      let f' := ldshiftexp r (e' + Int63.of_Z FloatOps.shift)%int63 in
-      if (f == f')%float then Fprim r
-      else Fbig (SFBI2.scale (prim_to_big f) e)
-    | _ => Fbig (SFBI2.scale (prim_to_big f) e)
-    end
-  | Fbig f => Fbig (SFBI2.scale f e)
+  match e with
+  | BigZ.Pos (BigN.N0 e') => ldshiftexp x (e' + Int63.of_Z FloatOps.shift)%int63
+  | BigZ.Neg (BigN.N0 e') => ldshiftexp x (-e' + Int63.of_Z FloatOps.shift)%int63
+  | _ => nan
   end.
 
-Definition div2 x :=
-  match x with
-  | Fprim f => Fprim (f / 2)%float
-  | Fbig f => Fbig (SFBI2.div2 f)
-  end.
+Definition div2 x := (x / 2)%float.
 
-Definition add_UP prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_up (xf + yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.add_UP prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.add_UP prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.add_UP prec xb yb)
-  end.
+Definition add_UP (_ : precision) x y := next_up (x + y).
 
-Definition add_DN prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_down (xf + yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.add_DN prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.add_DN prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.add_DN prec xb yb)
-  end.
+Definition add_DN (_ : precision) x y := next_down (x + y).
 
-Definition sub_UP prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_up (xf - yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.sub_UP prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.sub_UP prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.sub_UP prec xb yb)
-  end.
+Definition sub_UP (_ : precision) x y := next_up (x - y).
 
-Definition sub_DN prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_down (xf - yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.sub_DN prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.sub_DN prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.sub_DN prec xb yb)
-  end.
+Definition sub_DN (_ : precision) x y := next_down (x - y).
 
-Definition mul_UP prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_up (xf * yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.mul_UP prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.mul_UP prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.mul_UP prec xb yb)
-  end.
+Definition mul_UP (_ : precision) x y := next_up (x * y).
 
-Definition mul_DN prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_down (xf * yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.mul_DN prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.mul_DN prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.mul_DN prec xb yb)
-  end.
+Definition mul_DN (_ : precision) x y := next_down (x * y).
 
-Definition div_UP prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_up (xf / yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.div_UP prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.div_UP prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.div_UP prec xb yb)
-  end.
+Definition div_UP (_ : precision) x y := next_up (x / y).
 
-Definition div_DN prec x y :=
-  match x, y with
-  | Fprim xf, Fprim yf => Fprim (next_down (xf / yf))
-  | Fprim xf, Fbig yb => Fbig (SFBI2.div_DN prec (prim_to_big xf) yb)
-  | Fbig xb, Fprim yf => Fbig (SFBI2.div_DN prec xb (prim_to_big yf))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.div_DN prec xb yb)
-  end.
+Definition div_DN (_ : precision) x y := next_down (x / y).
 
-Definition sqrt_UP prec x :=
-  match x with
-  | Fprim xf => Fprim (next_up (PrimFloat.sqrt xf))
-  | Fbig xb => Fbig (SFBI2.sqrt_UP prec xb)
-  end.
+Definition sqrt_UP (_ : precision) x := next_up (PrimFloat.sqrt x).
 
-Definition sqrt_DN prec x :=
-  match x with
-  | Fprim xf => Fprim (next_down (PrimFloat.sqrt xf))
-  | Fbig xb => Fbig (SFBI2.sqrt_DN prec xb)
-  end.
+Definition sqrt_DN (_ : precision) x := next_down (PrimFloat.sqrt x).
 
-Definition nearbyint_UP mode x :=
-  match x with
-  | Fprim f => Fbig (SFBI2.nearbyint mode (prim_to_big f))
-  | Fbig f => Fbig (SFBI2.nearbyint mode f)
-  end.
+Definition nearbyint_UP (mode : rounding_mode) (x : type) := nan.  (* TODO *)
 
-Definition nearbyint_DN mode x :=
-  match x with
-  | Fprim f => Fbig (SFBI2.nearbyint mode (prim_to_big f))
-  | Fbig f => Fbig (SFBI2.nearbyint mode f)
-  end.
+Definition nearbyint_DN (mode : rounding_mode) (x : type) := nan.  (* TODO *)
 
 Definition midpoint (x y : type) :=
-  match x, y with
-  | Fprim xf, Fprim yf =>
-    let z := ((xf + yf) / 2)%float in
-    if is_infinity z then Fprim (xf / 2 + yf / 2)%float else Fprim z
-  | Fprim xf, Fbig yb => Fbig (SFBI2.div2 (SFBI2.add_exact (prim_to_big xf) yb))
-  | Fbig xb, Fprim yf => Fbig (SFBI2.div2 (SFBI2.add_exact xb (prim_to_big yf)))
-  | Fbig xb, Fbig yb => Fbig (SFBI2.div2 (SFBI2.add_exact xb yb))
-  end.
+  let z := ((x + y) / 2)%float in
+  if is_infinity z then (x / 2 + y / 2)%float else z.
 
 Definition toX x := FtoX (toF x).
 Definition toR x := proj_val (toX x).
@@ -603,4 +419,4 @@ Lemma midpoint_correct :
 Proof.
 Admitted.
 
-End PrimOrBigFloat.
+End PrimitiveFloat.

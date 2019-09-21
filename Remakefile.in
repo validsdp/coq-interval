@@ -13,7 +13,7 @@ FILES = \
 	Float/Specific_ops \
 	Float/Specific_sig \
 	Float/Specific_stdz \
-	Float/Prim_or_big_ops \
+	Float/Primitive_ops \
 	Float/Sig \
 	Integral/Bertrand \
 	Integral/Integral \

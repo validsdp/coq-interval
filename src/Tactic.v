@@ -1450,8 +1450,8 @@ End IntervalTactic.
 (* Module ITSFBI2 := IntervalTactic SFBI2. *)
 (* Export ITSFBI2. *)
 
-Require Import Prim_or_big_ops.
-Module ITSFPBI2 := IntervalTactic PrimOrBigFloat.
+Require Import Primitive_ops.
+Module ITSFPBI2 := IntervalTactic PrimitiveFloat.
 Export ITSFPBI2.
 
 Import Private.
