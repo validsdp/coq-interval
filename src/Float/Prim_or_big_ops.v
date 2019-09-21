@@ -330,7 +330,13 @@ Definition sqrt_DN prec x :=
   | Fbig xb => Fbig (SFBI2.sqrt_DN prec xb)
   end.
 
-Definition nearbyint mode x :=
+Definition nearbyint_UP mode x :=
+  match x with
+  | Fprim f => Fbig (SFBI2.nearbyint mode (prim_to_big f))
+  | Fbig f => Fbig (SFBI2.nearbyint mode f)
+  end.
+
+Definition nearbyint_DN mode x :=
   match x with
   | Fprim f => Fbig (SFBI2.nearbyint mode (prim_to_big f))
   | Fbig f => Fbig (SFBI2.nearbyint mode f)
@@ -575,9 +581,17 @@ Lemma sqrt_DN_correct :
 Proof.
 Admitted.
 
-Lemma nearbyint_correct :
+Lemma nearbyint_UP_correct :
   forall mode x,
-  toX (nearbyint mode x) = Xnearbyint mode (toX x).
+  valid_ub (nearbyint_UP mode x) = true
+  /\ le_upper (Xnearbyint mode (toX x)) (toX (nearbyint_UP mode x)).
+Proof.
+Admitted.
+
+Lemma nearbyint_DN_correct :
+  forall mode x,
+  valid_lb (nearbyint_DN mode x) = true
+  /\ le_lower (toX (nearbyint_DN mode x)) (Xnearbyint mode (toX x)).
 Proof.
 Admitted.
 
