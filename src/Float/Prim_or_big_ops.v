@@ -217,13 +217,6 @@ Definition max' x y :=
 
 Definition max x y := if (real x && real y)%bool then max' x y else nan.
 
-(* TODO: improve ? *)
-Definition round (mode : rounding_mode) (prec : precision) (x : type) : type :=
-  match x with
-  | Fprim f => Fbig (SFBI2.round mode prec (prim_to_big f))
-  | Fbig f => Fbig (SFBI2.round mode prec f)
-  end.
-
 Definition neg x :=
   match x with
   | Fprim f => Fprim (- f)%float

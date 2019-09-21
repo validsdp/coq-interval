@@ -63,7 +63,6 @@ Parameter valid_lb : type -> bool.  (* valid lower bound (typically, not +oo) *)
 Parameter cmp : type -> type -> comparison.
 Parameter min : type -> type -> type.
 Parameter max : type -> type -> type.
-Parameter round : rounding_mode -> precision -> type -> type.
 Parameter neg : type -> type.
 Parameter abs : type -> type.
 Parameter scale : type -> sfactor -> type.
