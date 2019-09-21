@@ -247,16 +247,21 @@ Definition midpoint xi :=
   match xi with
   | Inan => F.zero
   | Ibnd xl xu =>
-    match F'.cmp xl F.zero, F'.cmp xu F.zero with
-    | Xund, Xund => F.zero
-    | Xeq, Xeq => F.zero
-    | Xlt, Xund => F.zero
-    | Xund, Xgt => F.zero
-    | Xeq, Xund => F.one
-    | Xund, Xeq => F.neg F.one
-    | Xgt, Xund => F.mul_UP (F.PtoP 52) xl (F.fromZ_UP 2)
-    | Xund, Xlt => F.mul_DN (F.PtoP 52) xu (F.fromZ_UP 2)
-    | _, _ => F.midpoint xl xu
+    match F.real xl, F.real xu with
+    | false, false => F.zero
+    | true, false =>
+      match F.cmp xl F.zero with
+      | Xund | Xlt => F.zero
+      | Xeq => F.one
+      | Xgt => xl
+      end
+    | false, true =>
+      match F.cmp xu F.zero with
+      | Xund | Xgt => F.zero
+      | Xeq => F.neg F.one
+      | Xlt => xu
+      end
+    | true, true => F.midpoint xl xu
     end
   end.
 
@@ -1309,79 +1314,34 @@ intros [|xl xu].
   now rewrite F.zero_correct. }
 intros (x, Hx).
 destruct x as [|x]; [now revert Hx; unfold contains; simpl; case (_ && _)|].
-revert Hx; unfold convert; case (_ && _);
-  [|now intros (H1, H2); exfalso;
-    apply (Rlt_irrefl 0), (Rlt_le_trans _ _ _ Rlt_0_1);
-    revert H1 H2; apply Rle_trans].
-intros (Hx1, Hx2).
-assert (Hr: (1 <= IZR (Zpower_pos F.radix 1))%R).
-{ rewrite IZR_Zpower_pos.
-  rewrite <- bpow_powerRZ.
-  now apply (bpow_le F.radix 0). }
-simpl.
-repeat rewrite F'.cmp_correct.
-xreal_tac xl ; xreal_tac xu ; simpl ;
-  rewrite F.zero_correct ; simpl.
-{ repeat split. }
-{ admit.
-  (* (* infinite lower *) *)
-  (* destruct (Rcompare_spec r 0). *)
-  (* { rewrite F.scale_correct. *)
-  (*   rewrite X0. *)
-  (*   simpl. *)
-  (*   repeat split. *)
-  (*   pattern r at 2 ; rewrite <- Rmult_1_r. *)
-  (*   now apply Rmult_le_compat_neg_l; [exact (Rlt_le _ _ H)|]. } *)
-  (* { rewrite (proj1 (F.neg_correct _)), F.one_correct, H. *)
-  (*   repeat split. *)
-  (*   lra. } *)
-  (* rewrite F.zero_correct. *)
-  (* repeat split. *)
-  (* exact (Rlt_le _ _ H). *) }
-{ (* infinite upper *)
-  destruct (Rcompare_spec r 0).
-  { rewrite F.zero_correct.
-    repeat split.
-    exact (Rlt_le _ _ H). }
-  { rewrite F.one_correct, H.
-    repeat split.
-    now apply IZR_le. }
-  admit.
-  (* rewrite F.scale_correct. *)
-  (* rewrite X. *)
-  (* simpl. *)
-  (* repeat split. *)
-  (* pattern r at 1 ; rewrite <- Rmult_1_r. *)
-  (* apply Rmult_le_compat_l; [exact (Rlt_le _ _ H)|]. *)
-  (* exact Hr. *) }
-(* finite bounds *)
-admit.
-(* assert ( *)
-(*   match F.toX (F.scale2 (F.add_exact xl xu) (F.ZtoS (-1))) with *)
-(*   | Xnan => False *)
-(*   | Xreal x0 => (r <= x0 <= r0)%R *)
-(*   end). *)
-(* { rewrite F.scale2_correct by easy. *)
-(*   rewrite F.add_exact_correct. *)
-(*   rewrite X, X0. *)
-(*   simpl. *)
-(*   change (Z.pow_pos 2 1) with 2%Z. *)
-(*   lra. } *)
-(* (* finite bounds 2 *) *)
-(* case_eq (F.toX (F.scale2 (F.add_exact xl xu) (F.ZtoS (-1)))) ; intros. *)
-(* { now rewrite H0 in H. } *)
-(* destruct (Rcompare_spec r 0) as [H1|H1|H1] ; *)
-(*   destruct (Rcompare_spec r0 0) as [H2|H2|H2] ; *)
-(*   try ( *)
-(*     refine (conj _ H) ; *)
-(*     rewrite H0 ; *)
-(*     apply refl_equal). *)
-(* rewrite F.zero_correct. *)
-(* simpl. *)
-(* rewrite H1, H2. *)
-(* repeat split ; apply Rle_refl. *)
-(* Qed. *)
-Admitted.
+revert Hx; unfold midpoint.
+rewrite !F.cmp_correct, F'.classify_zero.
+unfold convert.
+rewrite F.valid_lb_correct, F.valid_ub_correct.
+generalize (F.classify_correct xl); rewrite F.real_correct ;
+case_eq (F.classify xl) ; intro Cl ;
+  [xreal_tac xl; [easy|] | xreal_tac xl; [|easy]..] ; intros _ ;
+  [..|simpl; intro H; exfalso; lra] ;
+  ( generalize (F.classify_correct xu); rewrite F.real_correct ;
+    case_eq (F.classify xu) ; intro Cu ;
+      [xreal_tac xu; [easy|] | xreal_tac xu; [|easy]..] ; intros _ ;
+      [| |simpl; intro H; exfalso; lra|] ) ;
+  simpl ;
+  intros [Hl Hu] ;
+  rewrite ?F.zero_correct ;
+  try easy ;
+  try ( case Rcompare_spec; intros Hr ) ;
+  rewrite ?F.zero_correct, ?F'.neg_correct, ?F.one_correct, ?X, ?X0 ;
+  [|now ( split; simpl; try lra)..].
+elim (F.midpoint_correct xl xu (eq_refl _));
+  [|now rewrite !F.real_correct, ?X, ?X0..|
+    unfold F.toR; rewrite ?X, ?X0; simpl; lra].
+intros Rm [Hml Hmu].
+rewrite (F'.real_correct _ Rm); split; [easy|].
+revert Hml Hmu.
+unfold F.toR.
+now rewrite X, X0.
+Qed.
 
 Lemma midpoint'_valid_bounds :
   forall xi,
