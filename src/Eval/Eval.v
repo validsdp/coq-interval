@@ -444,11 +444,12 @@ rewrite <- I.bnd_correct.
 apply IHsteps with (1 := Hl).
 admit.
 unfold domain'.
-rewrite <- I.bnd_correct.
-apply IHsteps with (1 := Hr).
-admit.
-now rewrite <- I.bnd_correct; [|exists x].
 Admitted.
+(* rewrite <- I.bnd_correct. *)
+(* apply IHsteps with (1 := Hr). *)
+(* admit. *)
+(* now rewrite <- I.bnd_correct; [|exists x]. *)
+(* Admitted. *)
 
 Definition lookup_1d_step fi l u output cont :=
   if I.subset (fi (I.bnd l u)) output then output
