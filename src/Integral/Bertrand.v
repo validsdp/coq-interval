@@ -3,6 +3,7 @@ From Coquelicot Require Import Coquelicot AutoDerive.
 From mathcomp.ssreflect Require Import ssreflect ssrfun ssrbool ssrnat bigop.
 
 Require Import Stdlib.
+From Coquelicot Require Import Hierarchy.
 Require Import Coquelicot.
 Require Import Xreal.
 Require Import Sig.

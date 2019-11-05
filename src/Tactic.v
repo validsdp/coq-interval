@@ -17,12 +17,13 @@ the economic rights, and the successive licensors have only limited
 liability. See the COPYING file for more details.
 *)
 
-From Coq Require Import Reals List ZArith Psatz.
+From Coq Require Import Reals ZArith Psatz.
 From Coquelicot Require Import Coquelicot.
 
 Require Import Stdlib.
 Require Import Coquelicot.
 Require Import Xreal.
+From Coq Require Import List.
 Require Import Basic.
 Require Import Sig.
 Require Import Interval.

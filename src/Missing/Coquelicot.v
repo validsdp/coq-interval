@@ -3,7 +3,10 @@ From Coquelicot Require Import Coquelicot.
 From mathcomp.ssreflect Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype bigop.
 
 Require Import Stdlib.
+From Coquelicot Require Import Hierarchy.
 Require Import MathComp.
+
+Delimit Scope nat_scope with N.
 
 Lemma continuous_Rinv x :
   x <> 0 ->

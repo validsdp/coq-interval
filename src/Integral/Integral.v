@@ -22,12 +22,15 @@ From Coquelicot Require Import Coquelicot.
 From mathcomp.ssreflect Require Import ssreflect ssrfun ssrbool.
 
 Require Import Stdlib.
+From Coquelicot Require Import Hierarchy.
 Require Import Coquelicot.
 Require Import Xreal.
 Require Import Sig.
 Require Import Interval.
 Require Import Taylor_model.
 Require Import Interval_compl.
+
+Delimit Scope nat_scope with N.
 
 Section Missing.
 

@@ -35,6 +35,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Delimit Scope nat_scope with N.
+
 Local Open Scope nat_scope.
 
 Reserved Notation "--> e"
@@ -256,7 +258,7 @@ Definition opp := map C.opp.
 Section PrecIsPropagated.
 Variable u : U.
 
-Definition add := map2 (C.add u) id.
+Definition add := map2 (C.add u) (fun x => x).
 
 Definition sub := map2 (C.sub u) C.opp.
 

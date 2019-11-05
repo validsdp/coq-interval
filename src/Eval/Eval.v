@@ -52,7 +52,7 @@ now rewrite !IH; case no_floor_term; simpl; case no_floor_term; simpl.
 Qed.
 
 Lemma no_floor_prog_rcons t prog :
-  no_floor_prog (prog ++ (t :: nil)) = no_floor_term t && no_floor_prog prog.
+  no_floor_prog (prog ++ (t :: List.nil)) = no_floor_term t && no_floor_prog prog.
 Proof.
 unfold no_floor_prog.
 generalize true.
