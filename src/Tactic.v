@@ -1456,6 +1456,70 @@ Export ITSFPBI2.
 
 Import Private.
 
+(* From testsuite/example-20171018.v *)
+
+(* foire: nearbyint non implémenté *)
+(* Lemma h_54_ln_2  h : *)
+(*   -53 <= h <= 0 -> *)
+(*   -  Rnearbyint rnd_DN (h * ln 2 / ln 5) * ln 5 <= 54 * ln 2. *)
+(* Proof. *)
+(* intros. *)
+(* interval. *)
+(* Qed. *)
+
+(* From testsuite/example-20160218.v *)
+
+(* foire: pas de marge *)
+(* Lemma constant : *)
+(*   3 <= RInt (fun x => 1) 0 3 <= 3. *)
+(* Proof. *)
+(* integral. *)
+(* Qed. *)
+
+(* From testsuite/example-20120205.v *)
+
+(* foire: pas de marge *)
+(* Goal forall x, (1 <= x)%R -> (x <= x * x)%R. *)
+(* Proof. *)
+(* intros. *)
+(* apply Rminus_le. *)
+(* interval with (i_bisect_diff x). *)
+(* Qed. *)
+
+(* From testsuite/example-20071016.v *)
+
+Require Import Coquelicot.Coquelicot.
+
+(* foire: pas de marge *)
+(* Goal *)
+(*   RInt_gen (fun x => 1 * (powerRZ x 3 * ln x^2)) *)
+(*            (at_right 0) (at_point 1) = 1/32. *)
+(* Proof. *)
+(*   refine ((fun H => Rle_antisym _ _ (proj2 H) (proj1 H)) _). *)
+(*   integral. *)
+(* Qed. *)
+
+(* From testsuite/bug-20150924.v *)
+
+(* foire: pas de marge *)
+(* Goal forall x : R, *)
+(*   (Rabs (x - x) <= 1/5)%R. *)
+(* Proof. *)
+(* intros x. *)
+(* interval with (i_bisect_diff x). *)
+(* Qed. *)
+
+(* From testsuite/bug-20150925.v *)
+
+(* foire: pas de marge *)
+(* Goal forall x, (-1 / 3 <= x - x <= 1 / 7)%R. *)
+(* Proof. *)
+(* intros x. *)
+(* interval with (i_bisect_diff x). *)
+(* Qed. *)
+
+
+
 (*
 
 (* From bench-ineqs/benchmarks/coq/multi_poly.v *)
