@@ -403,10 +403,8 @@ Admitted.
 
 Lemma sqrt_UP_correct :
   forall p x,
-    valid_ub x = true
-    -> (match toX x with Xnan => True | Xreal r => (0 <= r)%R end)
-    -> (valid_ub (sqrt_UP p x) = true
-        /\ le_upper (Xsqrt (toX x)) (toX (sqrt_UP p x))).
+  valid_ub (sqrt_UP p x) = true
+  /\ le_upper (Xsqrt (toX x)) (toX (sqrt_UP p x)).
 Proof.
 Admitted.
 
