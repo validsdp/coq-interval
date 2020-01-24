@@ -51,24 +51,18 @@ Definition one := one.
 Definition nan := nan.
 
 Definition fromZ_default default x :=
-  let s := Z.ltb x 0 in
-  let x := Z.abs x in
-  let f := of_int63 (Int63.of_Z x) in
-  let (m, e) := frshiftexp f in
-  let m := normfr_mantissa m in
-  let m := bigZ_of_int m in
-  let e := bigZ_of_int e in
-  match (e - BigZ.of_Z (FloatOps.shift + FloatOps.prec))%bigZ with
-  | (BigZ.Pos _) as e' =>
-    if (BigZ.of_Z x =? BigZ.shiftl m e')%bigZ then
-      if s then (-f)%float else f
-    else
-      default
-  | (BigZ.Neg _) as e' =>
-    if (BigZ.shiftl (BigZ.of_Z x) (-e') =? m)%bigZ then
-      if s then (-f)%float else f
-    else
-      default
+  match x with
+  | Z0 => zero
+  | Zpos x =>
+    match (x ?= 9007199254740992)%positive (* 2^53 *) with
+    | Lt => of_int63 (Int63.of_pos x)
+    | _ => default
+    end
+  | Zneg x =>
+    match (x ?= 9007199254740992)%positive (* 2^53 *) with
+    | Lt => (-(of_int63 (Int63.of_pos x)))%float
+    | _ => default
+    end
   end.
 
 Definition fromZ := fromZ_default nan.
