@@ -20,23 +20,12 @@ Definition type := PrimFloat.float.
 
 Definition bigZ_of_int x := BigZ.Pos (BigN.N0 x).
 
-Definition prim_to_big (x : PrimFloat.float) : SFBI2.type :=
-  match classify x with
-  | PZero | NZero => Float 0%bigZ 0%bigZ
-  | PInf | NInf | NaN => Fnan
-  | PNormal | PSubn =>
-    let (m, e) := frshiftexp x in
-    let m := bigZ_of_int (normfr_mantissa m) in
-    let e := (bigZ_of_int e - bigZ_of_int (Int63.of_Z FloatOps.shift + 53)%int63)%bigZ in
-    Float m e
-  | NNormal | NSubn =>
-    let (m, e) := frshiftexp x in
-    let m := bigZ_of_int (normfr_mantissa m) in
-    let e := (bigZ_of_int e - bigZ_of_int (Int63.of_Z FloatOps.shift + 53)%int63)%bigZ in
-    Float (- m)%bigZ e
+Definition toF x : float radix2 :=
+  match Prim2SF x with
+  | S754_zero _ => Fzero
+  | S754_infinity _ | S754_nan => Basic.Fnan
+  | S754_finite s m e => Basic.Float s m e
   end.
-
-Definition toF x := SFBI2.toF (prim_to_big x).
 
 Definition precision := SFBI2.precision.
 Definition sfactor := SFBI2.sfactor.
@@ -105,7 +94,11 @@ Definition is_nan x :=
   | _ => false
   end.
 
-Definition mag x := SFBI2.mag (prim_to_big x).
+Definition bigZ_shift := Eval vm_compute in BigZ.of_Z FloatOps.shift.
+
+Definition mag x :=
+  let (_, e) := PrimFloat.frshiftexp x in
+  ((BigZ.Pos (BigN.N0 e)) - bigZ_shift)%bigZ.
 
 Definition valid_ub x := negb (x == neg_infinity)%float.
 
