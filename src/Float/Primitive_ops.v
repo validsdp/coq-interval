@@ -11,6 +11,8 @@ Require Import Specific_bigint.
 Require Import Specific_ops.
 Module SFBI2 := SpecificFloat BigIntRadix2.
 
+Require Import Flocq.PrimitiveFloats.NativeLayer.
+
 Module PrimitiveFloat <: FloatOps.
 
 Definition radix := radix2.
@@ -176,21 +178,96 @@ Lemma zero_correct : toX zero = Xreal 0.
 Proof. reflexivity. Qed.
 
 Lemma one_correct : toX one = Xreal 1.
-Proof.
-Admitted.
-(* cette preuve ne passe pas au Qed, à regerder *)
-(* now compute; rewrite Rinv_r; [unfold IZR, IPR|lra]. Qed. *)
+Proof. compute; apply f_equal; field. Qed.
 
 Lemma nan_correct : classify nan = Sig.Fnan.
 Proof. reflexivity. Qed.
-
-(* From ValidSDP Require Import FlocqNativeLayer. *)
 
 Lemma fromZ_correct :
   forall n, sensible_format = true ->
   (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
 Proof.
-Admitted.
+intros [ |p|p] _ Hp; unfold fromZ, fromZ_default; [now simpl| | ].
+{ case Pos.compare_spec; intro Hp'.
+  { now revert Hp; rewrite Hp'. }
+  { unfold toX, toF.
+    rewrite of_int63_spec.
+    unfold of_pos; rewrite of_pos_rec_spec; [ |now simpl].
+    replace (_ mod _)%Z with (Z.pos p).
+    2:{ symmetry; apply Zmod_small; split; [now simpl| ].
+      simpl; unfold Z.pow_pos; simpl.
+      apply Pos2Z.pos_lt_pos.
+      now apply (Pos.lt_trans _ _ _ Hp'). }
+    rewrite (SpecLayer.binary_normalize_equiv prec_gt_0 Hmax).
+    generalize
+      (Binary.binary_normalize_correct
+         _ _ prec_gt_0 Hmax Binary.mode_NE (Z.pos p) 0 false).
+    rewrite Generic_fmt.round_generic.
+    2:{ apply Generic_fmt.valid_rnd_N. }
+    2:{ apply FLT.generic_format_FLT.
+      set (f := Defs.Float _ _ _).
+      apply (FLT.FLT_spec _ _ _ _ f); [reflexivity| |now simpl].
+      revert Hp; simpl; intro Hp.
+      now apply (Z.le_lt_trans _ _ _ Hp). }
+    unfold Defs.F2R; simpl.
+    rewrite Rmult_1_r.
+    replace (Rlt_bool _ _) with true.
+    2:{ symmetry; apply Rlt_bool_true.
+      rewrite Rabs_pos_eq; [ |now apply IZR_le].
+      apply IZR_lt.
+      revert Hp; simpl; intro Hp.
+      now apply (Z.le_lt_trans _ _ _ Hp). }
+    intros [Bp [Fp _]]; revert Bp Fp.
+    case Binary.FF2B; simpl; [now intros _ ->|now simpl..| ].
+    intros s m e _ <- _.
+    unfold Defs.F2R; simpl; unfold FtoR.
+    now case e, s; simpl; try rewrite Rmult_1_r; try rewrite <-mult_IZR. }
+  lia. }
+case Pos.compare_spec; intro Hp'.
+{ now revert Hp; rewrite Hp'. }
+{ unfold toX, toF.
+  rewrite opp_spec.
+  rewrite of_int63_spec.
+  unfold of_pos; rewrite of_pos_rec_spec; [ |now simpl].
+  replace (_ mod _)%Z with (Z.pos p).
+  2:{ symmetry; apply Zmod_small; split; [now simpl| ].
+    simpl; unfold Z.pow_pos; simpl.
+    apply Pos2Z.pos_lt_pos.
+    now apply (Pos.lt_trans _ _ _ Hp'). }
+  rewrite (SpecLayer.binary_normalize_equiv prec_gt_0 Hmax).
+  generalize
+    (Binary.binary_normalize_correct
+       _ _ prec_gt_0 Hmax Binary.mode_NE (Z.pos p) 0 false).
+  rewrite Generic_fmt.round_generic.
+  2:{ apply Generic_fmt.valid_rnd_N. }
+  2:{ apply FLT.generic_format_FLT.
+    set (f := Defs.Float _ _ _).
+    apply (FLT.FLT_spec _ _ _ _ f); [reflexivity| |now simpl].
+    revert Hp; simpl; intro Hp.
+    now apply (Z.le_lt_trans _ _ _ Hp). }
+  unfold Defs.F2R; simpl.
+  rewrite Rmult_1_r.
+  replace (Rlt_bool _ _) with true.
+  2:{ symmetry; apply Rlt_bool_true.
+    rewrite Rabs_pos_eq; [ |now apply IZR_le].
+    apply IZR_lt.
+    revert Hp; simpl; intro Hp.
+    now apply (Z.le_lt_trans _ _ _ Hp). }
+  intros [Bp [Fp _]]; revert Bp Fp.
+  case Binary.FF2B; simpl; [ |now simpl..| ].
+  { intros _ H; destruct (Qreals.IZR_nz _ (eq_sym H)). }
+  change (IZR (Z.neg p)) with (- IZR (Z.pos p))%R.
+  intros s m e _ <- _.
+  unfold Defs.F2R; simpl; unfold FtoR.
+  case e, s; simpl; try rewrite Rmult_1_r;
+    try rewrite Ropp_mult_distr_l;
+    try rewrite <-mult_IZR;
+    try rewrite <-opp_IZR;
+    try (now simpl).
+    try (now simpl; rewrite <-mult_IZR).
+    now rewrite <-mult_IZR. }
+lia.
+Qed.
 
 Lemma fromZ_UP_correct :
   forall n,
