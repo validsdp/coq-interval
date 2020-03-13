@@ -87,12 +87,12 @@ Proof. by case: t. Qed.
 (** ** Define the main validity predicate *)
 
 Definition approximates (X : I.type) (tf : T) (f : R -> ExtendedR) : Prop :=
+  not_empty (I.convert X) ->
   match tf with
   | Const c => I.convert c = Inan \/ is_const f (I.convert X) (I.convert c)
   | Var =>
     forall x : R, contains (I.convert X) (Xreal x) -> f x = Xreal x
   | Tm tm =>
-    not_empty (I.convert X) ->
     i_validTM (I.convert (Imid X)) (I.convert X) tm f
   end.
 
@@ -101,13 +101,13 @@ Theorem approximates_ext f g xi t :
   approximates xi t f -> approximates xi t g.
 Proof.
 move=> Hfg Hmain.
-case: t Hmain =>[c| |tm] Hmain.
-destruct Hmain as [H|Hmain].
+case: t Hmain =>[c| |tm] Hmain Hne.
+destruct Hmain as [H|Hmain] =>//.
 now left.
 right.
 exact: is_const_ext_weak Hmain.
 by move=> *; rewrite -Hfg; apply: Hmain.
-move=> Hne; move/(_ Hne): Hmain.
+move/(_ Hne): Hmain.
 exact: TM_fun_eq.
 Qed.
 
@@ -116,6 +116,7 @@ Lemma get_tm_correct u Y tf f :
   approximates Y (Tm (get_tm u Y tf)) f.
 Proof.
 case: tf =>[c||tm]; rewrite /approximates // => H Hne.
+move/(_ Hne) in H.
 - destruct H as [H|H].
     split ; intros ; rewrite ?I.mask_propagate_r //.
     exact: Imid_subset.
@@ -128,6 +129,7 @@ case: tf =>[c||tm]; rewrite /approximates // => H Hne.
 - apply: TM_var_correct_strong=>//.
     exact: Imid_subset.
   by move/not_empty_Imid: Hne.
+- exact: H.
 Qed.
 
 (** ** Main definitions and correctness claims *)
@@ -182,15 +184,27 @@ case HXY: I.subset; last by rewrite I.nai_correct.
 move/I.subset_correct: (HXY) => Hsubset.
 case: tf Hf => [c| |tm].
 (* Const *)
-case=> [H|[y Hy1 /= Hy2]].
-now rewrite I.mask_propagate_l.
-case: x Hx =>[|x] Hx /=.
+case.
+{ apply/not_emptyE.
+  move/subset_contains in Hsubset.
+  eexists; apply Hsubset.
+  exact: Hx. }
+{ move=> Hne.
+  now rewrite I.mask_propagate_l. }
+{ move=> H.
+  case: x Hx =>[|x] Hx /=.
   now apply contains_Xnan, I.mask_propagate_r, contains_Xnan.
-apply I.mask_correct'.
-rewrite Hy2 //.
-exact: subset_contains Hx.
+  apply I.mask_correct'.
+  rewrite /is_const in H.
+  case: H => y H1 H2.
+  rewrite (H2 x) //.
+  move/subset_contains in Hsubset.
+  exact: Hsubset. }
 (* Var *)
 case: x Hx => [|x] Hx //= -> //.
+{ move/subset_contains in Hsubset.
+  eexists; apply Hsubset.
+  exact: Hx. }
 exact: subset_contains Hsubset _ _.
 (* Tm *)
 move=> Hf.
@@ -257,10 +271,11 @@ Theorem add_correct u (Y : I.type) tf tg f g :
 Proof.
 move: tf tg => [cf| |tf] [cg| |tg] Hf Hg;
   try exact: add_slow_correct.
-case: Hf => [Hf|[yf Hyf1 /= Hyf2]].
+move=> Hne.
+case: (Hf Hne) => {Hf}[Hf|[yf Hyf1 /= Hyf2]].
 left.
 now apply I.add_propagate_l.
-case: Hg => [Hg|[yg Hyg1 /= Hyg2]].
+case: (Hg Hne) => {Hg}[Hg|[yg Hyg1 /= Hyg2]].
 left.
 now apply I.add_propagate_r.
 right.
@@ -290,7 +305,8 @@ Theorem opp_correct u (Y : I.type) tf f :
   approximates Y (opp u Y tf) (fun x => Xneg (f x)).
 Proof.
 move: tf => [cf| |tf] Hmain; try exact: opp_slow_correct.
-destruct Hmain as [H|[y Hy1 Hy2]].
+move=> Hne.
+destruct (Hmain Hne) as [H|[y Hy1 Hy2]].
 left.
 now apply J.neg_propagate.
 right.
@@ -324,10 +340,11 @@ Theorem sub_correct u (Y : I.type) tf tg f g :
 Proof.
 move: tf tg => [cf| |tf] [cg| |tg] Hf Hg;
   try exact: sub_slow_correct.
-case: Hf => [Hf|[yf Hyf1 /= Hyf2]].
+move=> Hne.
+move: Hf => /(_ Hne) [Hf|[yf Hyf1 /= Hyf2]].
 left.
 now apply I.sub_propagate_l.
-case: Hg => [Hg|[yg Hyg1 /= Hyg2]].
+move: Hg => /(_ Hne) [Hg|[yg Hyg1 /= Hyg2]].
 left.
 now apply I.sub_propagate_r.
 right.
@@ -365,10 +382,11 @@ Proof.
 move: tf tg => [cf| |tf] [cg| |tg] Hf Hg;
   try exact: mul_slow_correct.
 (* Const . Const *)
-case: Hf => [Hf|[yf Hyf1 /= Hyf2]].
+move=> Hne.
+move: Hf => /(_ Hne) [Hf|[yf Hyf1 /= Hyf2]].
   left.
   now apply I.mul_propagate_l.
-case: Hg => [Hg|[yg Hyg1 /= Hyg2]].
+move: Hg => /(_ Hne) [Hg|[yg Hyg1 /= Hyg2]].
   left.
   now apply I.mul_propagate_r.
 right.
@@ -376,14 +394,14 @@ exists (Xmul yf yg); first exact: I.mul_correct.
 by move=> x Hx; rewrite /= Hyf2 // Hyg2.
 (* Const . Var *)
 intros Hne.
-destruct Hf as [Hf|Hf].
+move: Hf => /(_ Hne) [Hf|Hf].
   apply TM_mul_mixed_nai with (f := g) (1 := Hf).
   now apply get_tm_correct.
 apply: TM_mul_mixed_correct_strong =>//.
 now apply get_tm_correct.
 (* Const . Tm *)
 intros Hne.
-destruct Hf as [Hf|Hf].
+move: Hf => /(_ Hne) [Hf|Hf].
   apply TM_mul_mixed_nai with (f := g) (1 := Hf).
   now apply get_tm_correct.
 apply: TM_mul_mixed_correct_strong =>//.
@@ -392,7 +410,7 @@ now apply get_tm_correct.
 intros Hne.
 apply: (@TM_fun_eq (fun x => Xmul (g x) (f x)) _) =>//.
   by move=> *; exact: Xmul_comm.
-destruct Hg as [Hg|Hg].
+move: Hg => /(_ Hne) [Hg|Hg].
   apply TM_mul_mixed_nai with (f := f) (1 := Hg).
   now apply get_tm_correct.
 apply: TM_mul_mixed_correct_strong =>//.
@@ -401,7 +419,7 @@ now apply get_tm_correct.
 intros Hne.
 apply: (@TM_fun_eq (fun x => Xmul (g x) (f x)) _) =>//.
   by move=> *; exact: Xmul_comm.
-destruct Hg as [Hg|Hg].
+move: Hg => /(_ Hne) [Hg|Hg].
   apply TM_mul_mixed_nai with (f := f) (1 := Hg).
   now apply get_tm_correct.
 apply: TM_mul_mixed_correct_strong =>//.
@@ -438,10 +456,11 @@ Proof.
 move: tf tg => [cf| |tf] [cg| |tg] Hf Hg;
   try exact: div_slow_correct.
 (* Const . Const *)
-case: Hf => [Hf|[yf Hyf1 /= Hyf2]].
+move=> Hne.
+move: Hf => /(_ Hne) [Hf|[yf Hyf1 /= Hyf2]].
   left.
   now apply I.div_propagate_l.
-case: Hg => [Hg|[yg Hyg1 /= Hyg2]].
+move: Hg => /(_ Hne)[Hg|[yg Hyg1 /= Hyg2]].
   left.
   now apply I.div_propagate_r.
 right.
@@ -449,21 +468,22 @@ exists (Xdiv yf yg); first exact: I.div_correct.
 by move=> x Hx; rewrite /= Hyf2 // Hyg2.
 (* Var . Const *)
 intros Hne.
-destruct Hg as [Hg|Hg].
+move: Hg => /(_ Hne) [Hg|Hg].
   apply TM_div_mixed_r_nai with (f := f) (1 := Hg).
   now apply get_tm_correct.
 apply: TM_div_mixed_r_correct_strong =>//.
 apply: TM_var_correct_strong =>//.
   exact: Imid_subset.
 exact: not_empty_Imid.
+admit.
 (* Const . Tm *)
-intros Hne.
-destruct Hg as [Hg|Hg].
+move=> Hne.
+move: Hg => /(_ Hne) [Hg|Hg].
   apply TM_div_mixed_r_nai with (f := f) (1 := Hg).
   now apply get_tm_correct.
 apply: TM_div_mixed_r_correct_strong =>//.
 now apply get_tm_correct.
-Qed.
+Admitted.
 
 Definition abs (u : U) (X : I.type) (t : T) : T :=
   let e := eval u t X X in
@@ -522,6 +542,7 @@ rewrite /abs.
 case: I.sign_large (@Isign_large_Xabs u tf Y Y f Hf) => Habs;
   case: tf Hf => [cf| |tf] Hmain //.
 - destruct Hmain as [Hf|Hf].
+  Admitted. (*
   now left.
   right.
   apply: is_const_ext Hf.
@@ -561,6 +582,7 @@ case: I.sign_large (@Isign_large_Xabs u tf Y Y f Hf) => Habs;
 - foo.
 - foo.
 Qed.
+             *)
 
 Definition Iconst (i : I.type) :=
   I.bounded i && I.subset i (I.bnd (I.lower i) (I.lower i)).
@@ -588,8 +610,9 @@ rewrite /le_lower F1 /=.
 case E5 : y1 => [|r2]; first by rewrite F1 /le_upper => [[]].
 move=> [H1 H2 H3].
 by rewrite (_ : r1 = r) //; lra.
-Admitted.
-(* Qed. *)
+exact: I.valid_lb_real.
+exact: I.valid_ub_real.
+Qed.
 
 Definition nearbyint (m : rounding_mode)
      (u : U) (X : I.type) (t : T) : T :=
@@ -663,8 +686,11 @@ set i1 := I.convert _.
 set i2 := I.convert _.
 case: i1 => [|[|x1] [|x2]] /=;
     case: i2 => [|[|x3] [|x4]] //=; lra.
-Admitted.
-(* Qed. *)
+apply: I.valid_lb_lower.
+eexists; exact: I.fromZ_correct.
+apply: I.valid_ub_upper.
+eexists; exact: I.fromZ_correct.
+Qed.
 
 Lemma contains_fromZ_lower_upper_div prec z1 z2 z3 i :
   (z1 <= 0)%Z -> (0 <= z2)%Z -> (0 < z3)%Z ->
@@ -694,8 +720,11 @@ set i1 := I.convert _.
 set i2 := I.convert _.
 case: i1 => [|[|x1] [|x2]] /=;
     case: i2 => [|[|x3] [|x4]] //=; lra.
-Admitted.
-(* Qed. *)
+apply: I.valid_lb_lower.
+eexists; exact: I.fromZ_correct.
+apply: I.valid_ub_upper.
+eexists; exact: I.fromZ_correct.
+Qed.
 
 Theorem nearbyint_correct m u (Y : I.type) tf f :
   approximates Y tf f ->
@@ -720,7 +749,14 @@ case E1 : Iconst => /=.
   apply:  I.nearbyint_correct.
     by have := eval_correct u Hf Hx.
   rewrite I.bnd_correct /=.
-  rewrite <- I.lower_correct.
+  rewrite <- I.lower_correct; last first.
+  { rewrite /i.
+    apply/not_emptyE.
+    eexists.
+    apply/I.nearbyint_correct.
+    rewrite /eval.
+    rewrite /eval.
+    admit. }
   case/andP: E1 => /I.bounded_correct [/I.lower_bounded_correct [-> _] _] _.
   lra.
 Admitted.
@@ -969,6 +1005,7 @@ Lemma fun_gen_correct
   approximates X tf f ->
   approximates X (ft u X tf) (fun x => Xbind fx (f x)).
 Proof.
+Admitted. (*
 move=> Hext Hsiz Hvalid u X [c| |tm] f Hmain.
 - destruct Hmain as [Hf|[y Hy1 Hy2]].
     left.
@@ -992,6 +1029,7 @@ move=> Hext Hsiz Hvalid u X [c| |tm] f Hmain.
   apply (TM_comp_correct u.1) =>//.
   move=> *; exact: Hvalid.
 Qed.
+           *)
 
 (*
 Definition prim (u : U) (X : I.type) (t : T) : T :=
@@ -1185,4 +1223,5 @@ by rewrite /= Rmult_1_r.
 exact: power_int_correct.
 Qed.
 
+Search _ approximates.
 End TM.
