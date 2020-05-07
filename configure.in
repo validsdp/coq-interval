@@ -1,4 +1,4 @@
-AC_INIT([Interval], [3.4.1],
+AC_INIT([Interval], [3.4.2],
         [Guillaume Melquiond <guillaume.melquiond@inria.fr>],
         [interval])
 
@@ -40,14 +40,24 @@ if test ! "$COQDEP"; then
 fi
 AC_MSG_RESULT([$COQDEP])
 
+AC_ARG_VAR(COQDOC, [Coq documentation generator command [coqdoc]])
+AC_MSG_CHECKING([for coqdoc])
+if test ! "$COQDOC"; then
+   COQDOC=`which ${COQBIN}coqdoc`
+   if test ! "$COQDOC"; then
+      AC_MSG_RESULT([not found])
+   fi
+fi
+AC_MSG_RESULT([$COQDOC])
+
 AC_MSG_CHECKING([for Flocq])
 AS_IF(
   [ echo "Require Import Flocq.Version BinNat." \
-         "Goal (20500 <= Flocq_version)%N. easy. Qed." > conftest.v
+         "Goal (30100 <= Flocq_version)%N. easy. Qed." > conftest.v
     $COQC conftest.v 2> conftest.err ],
   [ AC_MSG_RESULT([yes]) ],
   [ AC_MSG_RESULT([no])
-    AC_MSG_ERROR([ *** Unable to find library Flocq >= 3.0 (http://flocq.gforge.inria.fr/)])])
+    AC_MSG_ERROR([ *** Unable to find library Flocq >= 3.1 (http://flocq.gforge.inria.fr/)])])
 rm -f conftest.v conftest.vo conftest.err
 
 AC_MSG_CHECKING([for Ssreflect])

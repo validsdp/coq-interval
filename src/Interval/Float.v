@@ -18,6 +18,7 @@ liability. See the COPYING file for more details.
 *)
 
 From Coq Require Import Bool Reals Psatz.
+From Flocq Require Import Raux.
 
 Require Import Stdlib.
 Require Import Xreal.
@@ -45,6 +46,11 @@ Definition le_lower' x y :=
 Module FloatInterval (F : FloatOps with Definition sensible_format := true).
 
 Module F' := FloatExt F.
+
+Definition c1 := F.fromZ 1.
+Definition cm1 := F.fromZ (-1).
+Definition c2 := F.fromZ 2.
+Definition p52 := F.PtoP 52.
 
 Definition type := f_interval F.type.
 Definition bound_type := F.type.
@@ -250,7 +256,11 @@ Definition upper xi :=
   | _ => F.nan
   end.
 
-Definition fromZ n := Ibnd (F.fromZ_DN n) (F.fromZ_UP n).
+Definition fromZ_small n :=
+  let f := F.fromZ n in Ibnd f f.
+
+Definition fromZ prec n :=
+  Ibnd (F.fromZ_DN prec n) (F.fromZ_UP prec n).
 
 Definition midpoint xi :=
   match xi with
@@ -298,6 +308,25 @@ Definition midpoint' xi :=
       if F'.lt xu xl then empty
       else let m := F.midpoint xl xu in Ibnd m m
     end
+  end.
+
+Definition bisect xi :=
+  match xi with
+  | Inan => (Inan, Inan)
+  | Ibnd xl xu =>
+    let m :=
+      match F.cmp xl F.zero, F.cmp xu F.zero with
+      | Xund, Xund => F.zero
+      | Xeq, Xeq => F.zero
+      | Xlt, Xund => F.zero
+      | Xund, Xgt => F.zero
+      | Xeq, Xund => c1
+      | Xund, Xeq => cm1
+      | Xgt, Xund => F.mul_UP p52 xl c2
+      | Xund, Xlt => F.mul_DN p52 xu c2
+      | _, _ => F.midpoint xl xu
+      end in
+    (Ibnd xl m, Ibnd m xu)
   end.
 
 Definition extension f fi := forall b x,
@@ -359,7 +388,6 @@ Definition abs xi :=
 Definition mul2 prec xi :=
   match xi with
   | Ibnd xl xu =>
-    let c2 := F.fromZ 2 in  (* TODO: eval *compute in? *)
     Ibnd (F.mul_DN prec xl c2) (F.mul_UP prec xu c2)
   | Inan => Inan
   end.
@@ -1238,14 +1266,27 @@ case (sign_strict_ xl xu);
 now split; simpl; [|elim (H _ H')].
 Qed.
 
-Theorem fromZ_correct :
+Theorem fromZ_small_correct :
   forall v,
-  contains (convert (fromZ v)) (Xreal (IZR v)).
+  (Z.abs v <= 256)%Z ->
+  contains (convert (fromZ_small v)) (Xreal (IZR v)).
 Proof.
 intros.
 simpl.
-elim (F.fromZ_DN_correct v); intros Hlv Lv.
-elim (F.fromZ_UP_correct v); intros Huv Uv.
+rewrite F'.valid_lb_real; [|now rewrite F.real_correct, (F.fromZ_correct _ H)].
+rewrite F'.valid_ub_real; [|now rewrite F.real_correct, (F.fromZ_correct _ H)].
+simpl.
+now rewrite (F.fromZ_correct _ H); split; right.
+Qed.
+
+Theorem fromZ_correct :
+  forall prec v,
+  contains (convert (fromZ prec v)) (Xreal (IZR v)).
+Proof.
+intros.
+simpl.
+elim (F.fromZ_DN_correct prec v); intros Hlv Lv.
+elim (F.fromZ_UP_correct prec v); intros Huv Uv.
 rewrite Hlv, Huv.
 split; [revert Lv|revert Uv]; unfold le_lower, le_upper;
   now case (F.toX _); [|intro r; try apply Ropp_le_cancel].
@@ -1350,6 +1391,37 @@ case_eq (F.classify xl) ; intro Cl ;
   intros _ ;
   exists (proj_val (F.toX (F.midpoint xl xu))) ; simpl ; lra.
 Qed.
+
+Theorem bisect_correct :
+  forall xi x,
+  contains (convert xi) x ->
+  contains (convert (fst (bisect xi))) x \/ contains (convert (snd (bisect xi))) x.
+Proof.
+intros [|xl xu] [|x] H.
+  now left.
+  now left.
+Admitted.
+(*
+  easy.
+unfold bisect.
+fold (midpoint (Ibnd xl xu)).
+destruct (midpoint_correct (Ibnd xl xu)) as [H1 H2].
+  now exists (Xreal x).
+set (m := midpoint _).
+fold m in H1, H2.
+clearbody m.
+revert H.
+simpl.
+rewrite H1.
+intros [H3 H4].
+destruct (Rle_or_lt x (proj_val (F.toX m))) as [H5|H5].
+  now left.
+right.
+split.
+now apply Rlt_le.
+exact H4.
+Qed.
+*)
 
 Theorem mask_correct :
   extension_2 Xmask mask.
@@ -1537,6 +1609,7 @@ case_eq (F.valid_lb xl); [|intros _ [H0 H1]; exfalso; lra].
 case_eq (F.valid_ub xu); [|intros _ _ [H0 H1]; exfalso; lra].
 intros Vxu Vxl [Hxl Hxu].
 simpl.
+unfold c2.
 elim (F.mul_DN_correct prec xl (F.fromZ 2)); [intros Vl Hl; rewrite Vl|].
 { elim (F.mul_UP_correct prec xu (F.fromZ 2)); [intros Vu Hu; rewrite Vu|].
   { split.

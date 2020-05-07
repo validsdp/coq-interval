@@ -1154,13 +1154,13 @@ split.
     by apply: Rmult_le_compat_l HPint; lra.
   apply: norm_RInt_le HisInt _; first lra.
     move => x Hx.
-    Focus 2.
-    apply: is_RInt_scal.
-
+    2: {
+      apply: is_RInt_scal.
       apply: (is_RInt_const_sign g) => // .
         case: Hg => [gpos | gneg]; [left|right] => x Hx.
           by apply: gpos; move: Hx; rewrite Rmin_left ?Rmax_right; lra.
         by apply: gneg; move: Hx; rewrite Rmin_left ?Rmax_right; lra.
+    }
   rewrite /=.
   eapply Rle_trans.
     exact: norm_scal.
@@ -1313,11 +1313,12 @@ split.
     by apply: Rmult_le_compat_l HPint; lra.
   apply: norm_RInt_le HisInt _; first lra.
     move => x Hx.
-    Focus 2.
+    2: {
     apply: is_RInt_scal.
       suff -> : norm Ig' = Ig'.
         exact: HIg''.
       by rewrite /norm /= /abs /=; rewrite Rabs_right //; lra.
+    }
   rewrite /=.
   eapply Rle_trans.
     exact: norm_scal.
@@ -1348,11 +1349,12 @@ Hypothesis HiFIntExt : forall xi x, contains (I.convert xi) (Xreal x) -> contain
 
 Variable Mf : TM.TMI.rpa.
 Variables X : I.type.
+Definition x0 := proj_val (I.convert_bound (I.midpoint X)).
 Definition X0 := I.bnd (I.midpoint X) (I.midpoint X).
 Definition iX := I.convert X.
 Definition iX0 := I.convert X0.
 
-Hypothesis validMf : TM.TMI.i_validTM iX0 iX Mf (fun x => Xreal (f x)).
+Hypothesis validMf : TM.TMI.i_validTM x0 iX Mf (fun x => Xreal (f x)).
 
 Variables (a b : R).
 

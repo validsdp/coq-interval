@@ -102,7 +102,7 @@ testsuite/clean:
 
 deps.dot: $(VFILES)
 	(echo "digraph interval_deps {" ;
-	echo "node [shape=ellipse, style=filled, URL=\"Interval.\N.html\", color=black];";
+	echo "node [shape=ellipse, style=filled, URL=\"html/Interval.\N.html\", color=black];";
 	(cd src ; @COQDEP@ -R . Interval $(addsuffix .v,$(FILES))) |
 	  sed -n -e 's,/,.,g;s/[.]vo.*: [^ ]*[.]v//p' |
 	  while read src dst; do
@@ -120,6 +120,26 @@ deps.png: deps.dot
 deps.map: deps.dot
 	dot -T cmap deps.dot | sed -e 's,>$,/>,' > deps.map
 
+html/index.html: $(VOFILES)
+	rm -rf html
+	mkdir -p html
+	@COQDOC@ -toc -interpolate -utf8 -html -g -R src Interval -d html \
+	  --coqlib http://coq.inria.fr/distrib/current/stdlib \
+	  --external https://math-comp.github.io/htmldoc mathcomp \
+	  --external http://flocq.gforge.inria.fr/html Flocq \
+	  --external http://coquelicot.saclay.inria.fr/html Coquelicot \
+	  $(VFILES)
+	for f in html/*.html; do
+	  sed -e 's;<a href="index.html">Index</a>;Go back to the <a href="../index.html">Main page</a> or <a href="index.html">Index</a>.;' -i $f
+	done
+
+doc: html/index.html
+
+public: deps.png deps.map html/index.html
+	mkdir -p public
+	sed -e '/#include deps.map/r deps.map' misc/template.html > public/index.html
+	cp -r html deps.png public/
+
 install:
 	prefix=@prefix@
 	exec_prefix=@exec_prefix@
@@ -133,14 +153,7 @@ EXTRA_DIST = \
 
 dist: $(EXTRA_DIST)
 	PACK=@PACKAGE_TARNAME@-@PACKAGE_VERSION@
-	DIRS=`git ls-tree -d -r --name-only HEAD`
-	FILES=`git ls-tree -r --name-only HEAD`
-	rm -rf $PACK.tar.gz $PACK
-	mkdir $PACK
-	for d in $DIRS; do mkdir $PACK/$d; done
-	for f in $FILES $(EXTRA_DIST); do cp $f $PACK/$f; done
-	git log --pretty="format:%ad %s" --date=short > $PACK/ChangeLog
-	rm `find $PACK -name .gitignore`
-	rm $PACK/.mailmap
-	tar czf $PACK.tar.gz $PACK
-	rm -rf $PACK
+	rm -f $PACK.tar.gz
+	git archive --format=tar --prefix=$PACK/ -o $PACK.tar HEAD
+	tar rf $PACK.tar --transform="s,^,$PACK/," --mtime="`git show -s --format=%ci`" $(EXTRA_DIST)
+	gzip -n -f --best $PACK.tar

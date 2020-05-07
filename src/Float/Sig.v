@@ -49,9 +49,11 @@ Parameter incr_prec : precision -> positive -> precision.
 Parameter zero : type.
 Parameter one : type.
 Parameter nan : type.
+
 Parameter fromZ : Z -> type.
-Parameter fromZ_UP : Z -> type.
-Parameter fromZ_DN : Z -> type.
+Parameter fromZ_DN : precision -> Z -> type.
+Parameter fromZ_UP : precision -> Z -> type.
+
 Parameter fromF : float radix -> type.
 Parameter classify : type -> fclass.
 Parameter real : type -> bool.
@@ -86,16 +88,17 @@ Parameter one_correct : toX one = Xreal 1.
 Parameter nan_correct : classify nan = Fnan.
 
 Parameter fromZ_correct :
-  forall n, sensible_format = true ->
-  (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
-
-Parameter fromZ_UP_correct :
   forall n,
-  valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+  (Z.abs n <= 256)%Z ->
+  toX (fromZ n) = Xreal (IZR n).
 
 Parameter fromZ_DN_correct :
-  forall n,
-  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+  forall p n,
+  valid_lb (fromZ_DN p n) = true /\ le_lower (toX (fromZ_DN p n)) (Xreal (IZR n)).
+
+Parameter fromZ_UP_correct :
+  forall p n,
+  valid_ub (fromZ_UP p n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP p n)).
 
 Parameter classify_correct :
   forall f, real f = match classify f with Freal => true | _ => false end.

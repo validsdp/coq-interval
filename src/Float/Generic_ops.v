@@ -63,7 +63,6 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   Definition cmp := @Fcmp radix.
   Definition min := @Fmin radix.
   Definition max := @Fmax radix.
-  Definition round := @Fround radix.
   Definition neg := @Fneg radix.
   Definition abs := @Fabs radix.
   Definition scale := @Fscale radix.
@@ -384,9 +383,9 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
 
   Definition fromZ n : float radix := match n with Zpos p => Float false p Z0 | Zneg p => Float true p Z0 | Z0 => Fzero end.
 
-  Definition fromZ_DN := fromZ.
+  Definition fromZ_DN (p : precision) := fromZ.
 
-  Definition fromZ_UP := fromZ.
+  Definition fromZ_UP (p : precision) := fromZ.
 
   Lemma fromZ_correct' : forall n, FtoX (fromZ n) = Xreal (IZR n).
   Proof.
@@ -394,23 +393,23 @@ Module GenericFloat (Rad : Radix) <: FloatOps.
   Qed.
 
   Lemma fromZ_UP_correct :
-    forall n,
-    valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+    forall p n,
+    valid_ub (fromZ_UP p n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP p n)).
   Proof.
   now intro n; split; [|rewrite fromZ_correct'; right].
   Qed.
 
   Lemma fromZ_DN_correct :
-    forall n,
-    valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+    forall p n,
+    valid_lb (fromZ_DN p n) = true /\ le_lower (toX (fromZ_DN p n)) (Xreal (IZR n)).
   Proof.
   now intro n; split; [|rewrite fromZ_correct'; right].
   Qed.
 
   Lemma fromZ_correct :
-    forall n, sensible_format = true ->
+    forall n,
     (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
-  Proof. intros n _ _; apply fromZ_correct'. Qed.
+  Proof. intros n _; apply fromZ_correct'. Qed.
 
   Lemma cmp_correct :
     forall x y,

@@ -60,9 +60,9 @@ Definition fromZ_default default x :=
 
 Definition fromZ := fromZ_default nan.
 
-Definition fromZ_UP := fromZ_default infinity.
+Definition fromZ_UP (p : precision) := fromZ_default infinity.
 
-Definition fromZ_DN := fromZ_default neg_infinity.
+Definition fromZ_DN (p : precision) := fromZ_default neg_infinity.
 
 Definition fromF (f : float radix) :=
   match f with
@@ -186,10 +186,10 @@ Lemma nan_correct : classify nan = Sig.Fnan.
 Proof. reflexivity. Qed.
 
 Lemma fromZ_correct :
-  forall n, sensible_format = true ->
+  forall n,
   (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
 Proof.
-intros [ |p|p] _ Hp; unfold fromZ, fromZ_default; [now simpl| | ].
+intros [ |p|p] Hp; unfold fromZ, fromZ_default; [now simpl| | ].
 { case Pos.compare_spec; intro Hp'.
   { now revert Hp; rewrite Hp'. }
   { unfold toX, toF.
@@ -272,10 +272,10 @@ lia.
 Qed.
 
 Lemma fromZ_UP_correct :
-  forall n,
-  valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+  forall p n,
+  valid_ub (fromZ_UP p n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP p n)).
 Proof.
-intros [ |p|p]; unfold fromZ_UP, fromZ_default.
+intros prec [ |p|p]; unfold fromZ_UP, fromZ_default.
 { now compute; split; [ |right]. }
 { case Pos.compare_spec; intro Hp.
   { now compute. }
@@ -379,10 +379,10 @@ now split.
 Qed.
 
 Lemma fromZ_DN_correct :
-  forall n,
-  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+  forall p n,
+  valid_lb (fromZ_DN p n) = true /\ le_lower (toX (fromZ_DN p n)) (Xreal (IZR n)).
 Proof.
-intros [ |p|p]; unfold fromZ_DN, fromZ_default.
+intros prec [ |p|p]; unfold fromZ_DN, fromZ_default.
 { now compute; split; [ |right]. }
 { case Pos.compare_spec; intro Hp.
   { now compute. }

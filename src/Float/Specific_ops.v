@@ -19,6 +19,7 @@ liability. See the COPYING file for more details.
 
 From Coq Require Import ZArith Lia Bool Psatz.
 From Flocq Require Import Raux Digits Bracket.
+From mathcomp.ssreflect Require Import ssrbool.
 
 Require Import Xreal.
 Require Import Basic.
@@ -27,8 +28,6 @@ Require Import Generic_proof.
 Require Import Sig.
 Require Import Specific_sig.
 Require Import Interval.Interval.  (* for le_upper/lower, TODO PR: move them? *)
-
-Import ssrbool.
 
 Inductive s_float (smantissa_type exponent_type : Type) : Type :=
   | Fnan : s_float smantissa_type exponent_type
@@ -75,6 +74,8 @@ Definition ZtoS := ZtoE.
 Definition StoZ := EtoZ.
 Definition PtoP n := ZtoE (Zpos n).
 Definition incr_prec x y := exponent_add x (ZtoE (Zpos y)).
+
+Definition sm1 := ZtoE (-1).
 
 Definition zero := Float mantissa_zero exponent_zero.
 Definition one := Float (ZtoM 1) exponent_zero.
@@ -144,12 +145,8 @@ Proof. now intro f; case f. Qed.
 
 Definition fromZ n := Float (ZtoM n) exponent_zero.
 
-Definition fromZ_UP := fromZ.
-
-Definition fromZ_DN := fromZ.
-
 Lemma fromZ_correct' :
-  forall n, FtoX (toF (fromZ n)) = Xreal (IZR n).
+  forall n, toX (fromZ n) = Xreal (IZR n).
 Proof.
 intros.
 unfold toX. simpl.
@@ -164,30 +161,38 @@ Qed.
 
 Lemma one_correct :
   toX one = Xreal 1.
-Proof. now unfold one; fold (fromZ 1); unfold toX; rewrite fromZ_correct'. Qed.
+Proof. now unfold one; fold (fromZ 1); rewrite fromZ_correct'. Qed.
+
+Lemma fromZ_correct :
+  forall n,
+  (Z.abs n <= 256)%Z ->
+  toX (fromZ n) = Xreal (IZR n).
+Proof.
+intros n _.
+apply fromZ_correct'.
+Qed.
+
+Definition fromZ_DN (p : precision) := fromZ.
 
 Lemma fromZ_DN_correct :
-  forall n,
-  valid_lb (fromZ_DN n) = true /\ le_lower (toX (fromZ_DN n)) (Xreal (IZR n)).
+  forall p n,
+    valid_lb (fromZ_DN p n) = true /\ le_lower (toX (fromZ_DN p n)) (Xreal (IZR n)).
 Proof.
 intro n; split; [now simpl|].
 rewrite <- fromZ_correct'; unfold toX, le_lower, le_upper, fromZ_DN.
 now case (- _)%XR; [|intros n'; right].
 Qed.
 
+Definition fromZ_UP (p : precision) := fromZ.
+
 Lemma fromZ_UP_correct :
-  forall n,
-  valid_ub (fromZ_UP n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP n)).
+  forall p n,
+    valid_ub (fromZ_UP p n) = true /\ le_upper (Xreal (IZR n)) (toX (fromZ_UP p n)).
 Proof.
 intro n; split; [now simpl|].
 rewrite <- fromZ_correct'; unfold toX, le_upper, fromZ_UP.
 now case (FtoX _); [|intros n'; right].
 Qed.
-
-Lemma fromZ_correct :
-  forall n, sensible_format = true ->
-  (Z.abs n <= 256)%Z -> toX (fromZ n) = Xreal (IZR n).
-Proof. intros n _ _; apply fromZ_correct'. Qed.
 
 Lemma match_helper_1 :
   forall A B y2, forall f : A -> B,
@@ -847,16 +852,6 @@ rewrite (proj1 H1).
 rewrite (proj1 (mantissa_one_correct)).
 now rewrite Pplus_one_succ_r.
 Qed.
-
-Definition round mode prec (f : type) :=
-  match f with
-  | Float m e =>
-    match mantissa_sign m with
-    | Mzero => zero
-    | Mnumber s p => round_aux mode prec s p e pos_Eq
-    end
-  | _ => f
-  end.
 
 (*
  * mul
@@ -1794,7 +1789,7 @@ Qed.
  * midpoint
  *)
 
-Definition midpoint (x y : type) := scale2 (add_exact x y) (ZtoS (-1)).
+Definition midpoint (x y : type) := scale2 (add_exact x y) sm1.
 
 Lemma midpoint_correct :
   forall x y,
@@ -1803,11 +1798,12 @@ Lemma midpoint_correct :
   -> real (midpoint x y) = true /\ (toR x <= toR (midpoint x y) <= toR y)%R.
 Proof.
 intros x y He.
-unfold toR, midpoint.
+unfold toR, midpoint, sm1.
 rewrite !real_correct.
 rewrite (scale2_correct _ _ He).
 rewrite add_exact_correct.
 do 2 (case toX; [easy|]).
+change (bpow radix2 (-1)) with (/2)%R.
 clear x y; simpl; intros x y _ _ Hxy.
 now split; [|lra].
 Qed.

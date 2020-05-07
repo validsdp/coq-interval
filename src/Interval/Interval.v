@@ -83,48 +83,6 @@ Proof.
 now intros xi x ->.
 Qed.
 
-Definition le_upper x y :=
-  match y with
-  | Xnan => True
-  | Xreal yr =>
-    match x with
-    | Xnan => False
-    | Xreal xr => Rle xr yr
-    end
-  end.
-
-Definition le_lower x y :=
-  le_upper (Xneg y) (Xneg x).
-
-Lemma le_upper_trans :
-  forall x y z,
-  le_upper x y -> le_upper y z -> le_upper x z.
-Proof.
-intros x y z.
-case z.
-split.
-intro zr.
-case y.
-intros _ H.
-elim H.
-intros yr.
-case x.
-intros H _.
-elim H.
-intros xr.
-simpl.
-apply Rle_trans.
-Qed.
-
-Lemma le_lower_trans :
-  forall x y z,
-  le_lower x y -> le_lower y z -> le_lower x z.
-Proof.
-unfold le_lower.
-intros.
-eapply le_upper_trans ; eassumption.
-Qed.
-
 Lemma contains_le :
   forall xl xu v,
   contains (Ibnd xl xu) v ->
@@ -195,37 +153,6 @@ apply contains_le in Hv.
 apply le_contains.
 now apply le_lower_trans with (1 := H1).
 now apply le_upper_trans with (2 := H2).
-Qed.
-
-Definition domain P b :=
-  forall x, contains b x -> P x.
-
-Theorem bisect :
-  forall P xl xm xu,
-  domain P (Ibnd xl xm) ->
-  domain P (Ibnd xm xu) ->
-  domain P (Ibnd xl xu).
-Proof.
-intros P xl xm xu Hl Hu [|x] H.
-elim H.
-case_eq xm ; intros.
-apply Hu.
-rewrite H0.
-exact (conj I (proj2 H)).
-case (Rle_dec x r) ; intros Hr.
-apply Hl.
-apply le_contains.
-exact (proj1 (contains_le _ _ _ H)).
-rewrite H0.
-exact Hr.
-apply Hu.
-apply le_contains.
-rewrite H0.
-unfold le_lower.
-simpl.
-apply Ropp_le_contravar.
-auto with real.
-exact (proj2 (contains_le _ _ _ H)).
 Qed.
 
 Definition domain' P b :=
@@ -394,6 +321,13 @@ Parameter midpoint'_correct :
   (forall x, contains (convert (midpoint' xi)) x -> contains (convert xi) x) /\
   (not_empty (convert xi) -> not_empty (convert (midpoint' xi))).
 
+Parameter bisect : type -> type * type.
+
+Parameter bisect_correct :
+  forall xi x,
+  contains (convert xi) x ->
+  contains (convert (fst (bisect xi))) x \/ contains (convert (snd (bisect xi))) x.
+
 Definition extension f fi := forall b x,
   contains (convert b) x -> contains (convert (fi b)) (f x).
 
@@ -529,10 +463,17 @@ Parameter bounded_correct :
   bounded xi = true ->
   lower_bounded xi = true /\ upper_bounded xi = true.
 
-Parameter fromZ : Z -> type.
+Parameter fromZ_small : Z -> type.
+
+Parameter fromZ_small_correct :
+  forall v,
+  (Z.abs v <= 256)%Z ->
+  contains (convert (fromZ_small v)) (Xreal (IZR v)).
+
+Parameter fromZ : precision -> Z -> type.
 
 Parameter fromZ_correct :
-  forall v, contains (convert (fromZ v)) (Xreal (IZR v)).
+  forall prec v, contains (convert (fromZ prec v)) (Xreal (IZR v)).
 
 Definition propagate_l fi :=
   forall xi yi : type, convert xi = Inan -> convert (fi xi yi) = Inan.

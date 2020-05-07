@@ -1014,7 +1014,7 @@ rewrite Zdiv_eucl_unique.
 set (q := (_ / _)%Z).
 set (r := (_ mod _)%Z).
 assert (Pq : (0 < q)%Z).
-  apply  Z.div_str_pos; split; [now auto with zarith|..].
+  apply  Z.div_str_pos; split; try easy; try lia.
   generalize (Zdigits_correct beta (Zpos p)); intros [U1 U2].
   apply Z.le_trans with (2 := U1).
   rewrite Pos2Z.inj_pow, radix_to_pos.

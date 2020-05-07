@@ -46,7 +46,7 @@ Goal
     <= 5/65536.
 Proof.
   intros.
-  interval with (i_bisect_taylor x, i_degree 3).
+  interval with (i_bisect x, i_taylor x, i_degree 3).
 Qed.
 
 Goal
@@ -55,7 +55,7 @@ Goal
 Proof.
   intros.
   apply Rminus_lt.
-  interval with (i_bisect_diff x).
+  interval with (i_bisect x, i_autodiff x).
 Qed.
 
 Require Import Coquelicot.Coquelicot.
@@ -75,6 +75,7 @@ Proof.
   integral.
 Qed.
 
+(*
 Goal
   Rabs (RInt_gen (fun t => 1/sqrt t * exp (-(1*t)))
                  (at_point 1) (Rbar_locally p_infty)
@@ -82,3 +83,4 @@ Goal
 Proof.
   interval.
 Qed.
+*)

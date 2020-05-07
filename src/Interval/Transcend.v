@@ -18,7 +18,7 @@ liability. See the COPYING file for more details.
 *)
 
 From Coq Require Import Reals Psatz.
-From Flocq Require Import Digits.
+From Flocq Require Import Raux Digits.
 
 Require Import Stdlib.
 Require Import Xreal.
@@ -73,11 +73,14 @@ Definition Z2P x :=
 Definition c1 := F.one.
 Definition c2 := F.fromZ 2.
 Definition c3 := F.fromZ 3.
-Definition i1 := I.bnd c1 c1.
-Definition i2 := I.fromZ 2.
-Definition i3 := I.fromZ 3.
-Definition i4 := I.fromZ 4.
-Definition i6 := I.fromZ 6.
+Definition cm1 := F.neg F.one.
+Definition i1 := I.fromZ_small 1.
+Definition i2 := I.fromZ_small 2.
+Definition i3 := I.fromZ_small 3.
+Definition i4 := I.fromZ_small 4.
+Definition i5 := I.fromZ_small 5.
+Definition i6 := I.fromZ_small 6.
+Definition i239 := I.fromZ_small 239.
 Definition c1_2 := F.div2 c1.
 Definition c1_8 := iter_pos F.div2 8 c1.  (* TODO: eval *compute in ? *)
 Definition c1_p_c1_8 := F.add_DN (F.PtoP 52) c1 c1_8.  (* TODO: eval *compute in ? *)
@@ -138,7 +141,10 @@ Qed.
 Lemma i1_correct : contains (I.convert i1) (Xreal 1).
 Proof.
 simpl; unfold c1.
-rewrite F'.valid_lb_one, F'.valid_ub_one; rewrite F.one_correct; simpl; lra.
+rewrite F'.valid_lb_real; [|now rewrite F.real_correct, F.fromZ_correct].
+rewrite F'.valid_ub_real; [|now rewrite F.real_correct, F.fromZ_correct].
+simpl.
+rewrite F.fromZ_correct; [lra|lia].
 Qed.
 
 Ltac bound_tac :=
@@ -178,8 +184,8 @@ Definition atan_fast0 prec xi :=
 
 Definition pi4_gen prec :=
   I.sub prec
-   (I.mul2 prec (I.mul2 prec (atan_fast0 prec (I.inv prec (I.fromZ 5)))))
-   (atan_fast0 prec (I.inv prec (I.fromZ 239))).
+   (I.mul2 prec (I.mul2 prec (atan_fast0 prec (I.inv prec i5))))
+   (atan_fast0 prec (I.inv prec i239)).
 
 Definition pi4_seq := constant_generator pi4_gen.
 Definition pi4 := constant_getter pi4_seq.
@@ -203,7 +209,7 @@ Definition atan_fastP prec x :=
 
 Definition atan_fast prec x :=
   match F'.cmp x F.zero with
-  | Xeq => I.bnd F.zero F.zero
+  | Xeq => I.zero
   | Xlt => I.neg (atan_fastP prec (F.neg x))
   | Xgt => atan_fastP prec x
   | Xund => I.nai
@@ -221,7 +227,7 @@ rewrite atan_atanc, Rmult_comm.
 apply J.mul_correct with (2 := Ix).
 replace (atanc x) with (1 - (1 - atanc x))%R by ring.
 apply J.sub_correct.
-  apply i1_correct.
+  now apply I.fromZ_small_correct.
 pose (Ai := fun x => sum_f_R0 (fun n : nat => ((-1) ^ n / INR (2 * n + 1) * x ^ (2 * n))%R)).
 assert (Hexit : forall k powi divi,
     contains (I.convert powi) (Xreal (x ^ (2 * k))) ->
@@ -273,7 +279,8 @@ assert (Hexit : forall k powi divi,
 generalize (F.scale c1 (F.ZtoS (Z.neg (F.prec prec)))) (Pos.to_nat (F.prec prec)).
 intros thre n.
 replace 1%R with (Ai x 0) by (unfold Ai ; simpl ; field).
-generalize i1_correct (I.fromZ_correct 3).
+assert (H3le256 : (Z.abs 3 <= 256)%Z); [now compute|].
+generalize i1_correct (I.fromZ_small_correct 3 H3le256).
 fold i1 i3.
 generalize i1 i3.
 intros powi divi.
@@ -327,7 +334,7 @@ rewrite H, plus_0_r in Hdiv.
 replace (2 * (n - m + 1) + 1) with (2 * (n - m) + 1 + 2) by ring.
 rewrite plus_INR.
 apply J.add_correct with (1 := Hdiv).
-apply I.fromZ_correct.
+now apply I.fromZ_small_correct; compute.
 change (Ai x (n - S m)%nat + (-1) ^ S (n - S m) * / INR (2 * S (n - S m) + 1) * x ^ (2 * S (n - S m)))%R
   with (Ai x (S (n - S m))).
 change (-1 * (-1) ^ (n - S m + 1))%R with ((-1) ^ (S (n - S m + 1)))%R.
@@ -351,8 +358,8 @@ intros p.
 generalize (F.PtoP (p * 31)).
 clear prec p.
 intros prec.
-assert (H: forall p, (2 <= p)%Z ->
-    contains (I.convert (atan_fast0 prec (I.inv prec (I.fromZ p)))) (Xreal (atan (/ IZR p)))).
+assert (H: forall p, (2 <= p <= 256)%Z ->
+    contains (I.convert (atan_fast0 prec (I.inv prec (I.fromZ_small p)))) (Xreal (atan (/ IZR p)))).
   intros p Hp.
   apply atan_fast0_correct.
   rewrite Rabs_pos_eq.
@@ -361,10 +368,13 @@ assert (H: forall p, (2 <= p)%Z ->
   now apply IZR_le.
   apply Rlt_le, Rinv_0_lt_compat.
   apply IZR_lt.
-  now apply Z.lt_le_trans with (2 := Hp).
+  now apply Z.lt_le_trans with 2%Z.
   replace (Xreal (/ IZR p)) with (Xinv (Xreal (IZR p))).
   apply I.inv_correct.
-  apply I.fromZ_correct.
+  apply I.fromZ_small_correct.
+    rewrite Z.abs_eq.
+    apply Hp.
+    now apply Z.le_trans with 2%Z.
   unfold Xinv'.
   simpl.
   case is_zero_spec ; try easy.
@@ -409,7 +419,7 @@ case Rlt_bool_spec ; intros Bx'.
 rewrite F'.lt_correct with (2 := Rx);
   [|now unfold F.toR; rewrite F.fromZ_correct; [..|lia]].
 unfold F.toR at 1.
-rewrite F.fromZ_correct; [|easy|lia].
+rewrite F.fromZ_correct; [|lia].
 simpl Rlt_bool.
 case Rlt_bool_spec ; intros Bx'' ; cycle 1.
 { replace (Xreal (atan (toR x))) with (Xadd (Xreal (PI / 4)) (Xatan (Xreal ((toR x - 1) / (toR x + 1))))).
@@ -619,7 +629,8 @@ assert (Hexit : forall k powi divi,
 generalize (F.scale c1 (F.ZtoS (Z.neg (F.prec prec)))) (Pos.to_nat (F.prec prec)).
 intros thre n.
 replace 1%R with (Ai x 0) by (unfold Ai ; simpl ; field).
-generalize i1_correct (I.fromZ_correct 2).
+assert (H2le256 : (2 <= 256)%Z); [now compute|].
+generalize i1_correct (I.fromZ_small_correct 2 H2le256).
 fold i1 i2.
 generalize i1 i2.
 intros powi divi.
@@ -915,12 +926,11 @@ Definition cos_fast0 prec x :=
 
 (* 0 <= input *)
 Definition sin_cos_reduce prec x :=
-  let i1 := I.bnd c1 c1 in
   let th := c1_2 in
   let fix reduce x (nb : nat) {struct nb} :=
     match F'.le x th, nb with
     | true, _ => (Gt, cos_fast0 prec x)
-    | _, O => (Eq, I.bnd (F.neg c1) c1)
+    | _, O => (Eq, I.bnd cm1 c1)
     | _, S n =>
       match reduce (F.div2 x) n with
       | (s, c) =>
@@ -1009,7 +1019,9 @@ assert (Hexit: forall k powi divi,
 generalize (F.scale c1 (F.ZtoS (Z.neg (F.prec prec)))) (Pos.to_nat (F.prec prec)).
 intros thre n.
 replace 1%R with (A1 (toR x) 0) by (unfold A1 ; simpl ; field).
-generalize i1_correct (I.fromZ_correct 2) (I.fromZ_correct 3).
+assert (H2le256 : (Z.abs 2 <= 256)%Z); [now compute|].
+assert (H3le256 : (Z.abs 2 <= 256)%Z); [now compute|].
+generalize i1_correct (I.fromZ_small_correct 2 H2le256) (I.fromZ_small_correct 3 H3le256).
 fold i1 i2 i3.
 generalize i1 i2 i3.
 intros powi divi facti.
@@ -1077,7 +1089,7 @@ rewrite <- H.
 replace (2 * (n - S m + 2) + 1) with (2 * (n - S m + 1) + 1 + 2) by ring.
 rewrite plus_INR.
 apply J.add_correct with (1 := Hfact).
-apply I.fromZ_correct.
+now apply I.fromZ_small_correct; compute.
 apply f_equal.
 change (A1 (toR x) (n - S m) + (-1) ^ S (n - S m) * / INR (fact (2 * S (n - S m))) * toR x ^ (2 * S (n - S m)))%R
   with (A1 (toR x) (S (n - S m))).
@@ -1139,7 +1151,7 @@ induction nb ; intros x Hxr Hx.
     exact (H x Hxr Hx H0). }
   intros _.
   simpl.
-  unfold c1.
+  unfold c1, cm1.
   rewrite F'.neg_correct.
   rewrite F'.valid_lb_neg.
   rewrite F'.valid_ub_one.
@@ -1168,11 +1180,7 @@ refine (_ (IHnb (F.div2 x) _ _)).
         { apply I.mul2_correct.
           apply I.sqr_correct.
           exact Hc. }
-        unfold c1.
-        rewrite I.bnd_correct.
-        2: now apply I.valid_lb_real; rewrite F.one_correct.
-        2: now apply I.valid_ub_real; rewrite F.one_correct.
-        simpl; rewrite F.one_correct; lra. }
+        apply i1_correct. }
       simpl.
       apply f_equal.
       rewrite cos_2a_cos.
@@ -1260,7 +1268,7 @@ Qed.
 
 Definition cos_fast prec x :=
   match F'.cmp x F.zero with
-  | Xeq => I.bnd c1 c1
+  | Xeq => i1
   | Xlt => cos_fastP prec (F.neg x)
   | Xgt => cos_fastP prec x
   | Xund => I.nai
@@ -1294,10 +1302,7 @@ case Rcompare_spec ; intros H.
   apply Ropp_involutive. }
 { (* zero *)
   rewrite H, cos_0.
-  unfold c1.
-  simpl.
-  rewrite F'.valid_lb_one, F'.valid_ub_one, F.one_correct.
-  split ; apply Rle_refl. }
+  apply i1_correct. }
 (* pos *)
 replace r with (toR x).
 { apply cos_fastP_correct.
@@ -1420,7 +1425,9 @@ apply J.mul_correct.
   generalize (F.scale c1 (F.ZtoS (Z.neg (F.prec prec)))) (Pos.to_nat (F.prec prec)).
   intros thre n.
   replace 1%R with (Si (toR x) 0) by (unfold Si ; simpl ; field).
-  generalize i1_correct (I.fromZ_correct 6) (I.fromZ_correct 4).
+  assert (H6le256 : (Z.abs 6 <= 256)%Z); [now compute|].
+  assert (H4le256 : (Z.abs 4 <= 256)%Z); [now compute|].
+  generalize i1_correct (I.fromZ_small_correct 6 H6le256) (I.fromZ_small_correct 4 H4le256).
   fold i1 i6 i4.
   generalize i1 i6 i4.
   intros powi divi facti.
@@ -1487,7 +1494,7 @@ rewrite <- H.
 replace (2 * (n - S m + 2) + 2) with (2 * (n - S m + 1) + 2 + 2) by ring.
 rewrite plus_INR.
 apply J.add_correct with (1 := Hfact).
-apply I.fromZ_correct.
+now apply I.fromZ_small_correct; compute.
 apply f_equal.
 change (Si (toR x) (n - S m)%nat + (-1) ^ S (n - S m) * / INR (fact (2 * S (n - S m) + 1)) * toR x ^ (2 * S (n - S m)))%R
   with (Si (toR x) (S (n - S m))).
@@ -1508,11 +1515,11 @@ Definition sin_fastP prec x :=
     let prec := F.incr_prec prec (Z2P (m + 6)) in
     match sin_cos_reduce prec x (S (Z2nat m)) with
     | (s, c) =>
-      let v := I.sqrt prec (I.sub prec (I.bnd c1 c1) (I.sqr prec c)) in
+      let v := I.sqrt prec (I.sub prec i1 (I.sqr prec c)) in
       match s with
       | Lt => I.neg v
       | Gt => v
-      | _ => I.bnd (F.neg c1) c1
+      | _ => I.bnd cm1 c1
       end
     end
   end.
@@ -1540,7 +1547,7 @@ destruct sin_cos_reduce as [ss ci].
 intros [Hc Hs].
 destruct ss.
 { simpl.
-  unfold c1.
+  unfold c1, cm1.
   rewrite F'.neg_correct, F'.valid_lb_neg, F.one_correct, F'.valid_ub_one.
   apply SIN_bound. }
 { rewrite <- (Ropp_involutive (sin (toR x))).
@@ -1553,10 +1560,7 @@ destruct ss.
     rewrite sin2.
     change (Xreal (1 - (cos (toR x))²)) with (Xsub (Xreal 1) (Xsqr (Xreal (cos (toR x))))).
     apply I.sub_correct.
-    { simpl.
-      unfold c1.
-      rewrite F.one_correct, F'.valid_lb_one, F'.valid_ub_one.
-      split ; apply Rle_refl. }
+    { apply i1_correct. }
     now apply I.sqr_correct. }
   unfold Xsqrt'.
   simpl.
@@ -1571,10 +1575,7 @@ replace (Xreal (sqrt (sin (toR x))²)) with (Xsqrt (Xreal (sin (toR x))²)).
   rewrite sin2.
   change (Xreal (1 - (cos (toR x))²)) with (Xsub (Xreal 1) (Xsqr (Xreal (cos (toR x))))).
   apply I.sub_correct.
-  { simpl.
-    unfold I.convert_bound, c1.
-    rewrite F.one_correct, F'.valid_lb_one, F'.valid_ub_one.
-    split ; apply Rle_refl. }
+  { apply i1_correct. }
   now apply I.sqr_correct. }
 unfold Xsqrt'.
 simpl.
@@ -1586,7 +1587,7 @@ Qed.
 
 Definition sin_fast prec x :=
   match F'.cmp x F.zero with
-  | Xeq => I.bnd F.zero F.zero
+  | Xeq => I.zero
   | Xlt => I.neg (sin_fastP prec (F.neg x))
   | Xgt => sin_fastP prec x
   | Xund => I.nai
@@ -1622,8 +1623,7 @@ unfold toR.
 now rewrite F'.neg_correct, Hr.
 (* zero *)
 rewrite H, sin_0.
-simpl.
-rewrite F.zero_correct, F'.valid_lb_zero, F'.valid_ub_zero.
+rewrite I.zero_correct.
 split ; apply Rle_refl.
 (* pos *)
 replace r with (toR x).
@@ -1663,7 +1663,7 @@ Definition tan_fastP prec x :=
 
 Definition tan_fast prec x :=
   match F'.cmp x F.zero with
-  | Xeq => I.bnd F.zero F.zero
+  | Xeq => I.zero
   | Xlt => I.neg (tan_fastP prec (F.neg x))
   | Xgt => tan_fastP prec x
   | Xund => I.nai
@@ -1688,7 +1688,7 @@ case_eq (F'.le' x c1_2) ; intros Hx.
   now rewrite Rabs_pos_eq.
   apply I.sqrt_correct.
   apply I.sub_correct.
-  apply i1_correct.
+  now apply I.fromZ_small_correct.
   apply I.sqr_correct.
   apply sin_fast0_correct with (1 := Rx).
   now rewrite Rabs_pos_eq.
@@ -1734,14 +1734,8 @@ case_eq (F'.le' x c1_2) ; intros Hx.
   generalize (sin_cos_reduce_correct prec (S (Z2nat (F.StoZ (F.mag x)))) x Rx Bx).
   case sin_cos_reduce.
   intros s c [Hc Hs].
-  assert (Hc1 : contains (I.convert (I.bnd c1 c1)) (Xreal 1)).
-  { unfold c1.
-    rewrite I.bnd_correct.
-    2: now apply I.valid_lb_real; rewrite F.one_correct.
-    2: now apply I.valid_ub_real; rewrite F.one_correct.
-    rewrite F.one_correct.
-    split; lra. }
-  assert (H: contains (I.convert (I.sqrt prec (I.sub prec (I.div prec (I.bnd c1 c1) (I.sqr prec c)) (I.bnd c1 c1)))) (Xabs (Xdiv (Xreal (sin (toR x))) (Xreal (cos (toR x)))))).
+  assert (Hc1 := i1_correct).
+  assert (H: contains (I.convert (I.sqrt prec (I.sub prec (I.div prec i1 (I.sqr prec c)) i1))) (Xabs (Xdiv (Xreal (sin (toR x))) (Xreal (cos (toR x)))))).
   { replace (Xabs (Xdiv (Xreal (sin (toR x))) (Xreal (cos (toR x)))))
       with (Xsqrt (Xsub (Xdiv (Xreal 1) (Xsqr (Xreal (cos (toR x))))) (Xreal 1))).
     { apply I.sqrt_correct.
@@ -2025,7 +2019,9 @@ assert (Hexit : forall k powi divi,
 generalize (F.scale c1 (F.ZtoS (Z.neg (F.prec prec)))) (Pos.to_nat (F.prec prec)).
 intros thre n.
 replace (1 - toR x)%R with (E1 (- toR x) (0 + 1)) by (unfold E1 ; simpl ; field).
-generalize Ix (I.fromZ_correct 2) (I.fromZ_correct 3).
+assert (H2le256 : (Z.abs 2 <= 256)%Z); [now compute|].
+assert (H3le256 : (Z.abs 3 <= 256)%Z); [now compute|].
+generalize Ix (I.fromZ_small_correct 2 H2le256) (I.fromZ_small_correct 3 H3le256).
 fold i2 i3.
 generalize i2 i3.
 generalize xi at 1 2.
