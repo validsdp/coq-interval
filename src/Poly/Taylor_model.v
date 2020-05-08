@@ -1246,5 +1246,4 @@ by rewrite /= Rmult_1_r.
 exact: power_int_correct.
 Qed.
 
-Search _ approximates.
 End TM.
