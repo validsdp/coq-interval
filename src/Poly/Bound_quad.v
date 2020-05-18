@@ -121,33 +121,33 @@ have H4 : (a2 + a2 + (a2 + a2) <> 0)%R.
   case/(I.upper_bounded_correct _) => _.
   rewrite /I.bounded_prop.
   set d := I.div prec _ _.
-Admitted.
-(*   suff->: I.convert d = Inan by []. *)
-(*   apply -> contains_Xnan. *)
-(*   rewrite -(Xdiv_0_r (Xsqr (Xreal a1))). *)
-(*   apply: I.div_correct =>//. *)
-(*   apply: I.sqr_correct. *)
-(*   by apply: Hnth; rewrite Hi3. *)
-(* have H2 : (a2 + a2 <> 0)%R by intro K; rewrite K Rplus_0_r in H4. *)
-(* suff->: s1 = Rmult x3 s2. *)
-(*   have->: Rmult a0 x0 = a0 by simpl; rewrite /x0 powerRZ_O Rmult_1_r. *)
-(*   rewrite -!Rplus_assoc /Rminus; congr Rplus. *)
-(*   rewrite /x1 /x2 /Rsqr. *)
-(*   field. *)
-(*   split =>//. *)
-(* by rewrite -Rplus_assoc in H4. *)
-(* rewrite /s1 /s2 /x3; clear. *)
-(* rewrite Rmult_comm. *)
-(* rewrite big_mkord big_distrl. *)
-(* apply: eq_bigr=> i _. *)
-(* rewrite /PolR.tail /PolR.nth nth_drop. *)
-(* (* some bookkeeping about powers *) *)
-(* rewrite -!(pow_powerRZ _ 3). *)
-(* rewrite /= !Rmult_assoc; f_equal; ring. *)
-(* by rewrite addnC leq_subnK. *)
-(* move=> i /andP [Hi _]. *)
-(* by rewrite PolR.nth_default ?Rmult_0_l. *)
-(* Qed. *)
+  suff->: I.convert d = Inan.
+  { by rewrite /not_empty; move/(_ (@ex_intro _ (fun _ => True) 0%R I)). }
+  apply -> contains_Xnan.
+  rewrite -(Xdiv_0_r (Xsqr (Xreal a1))).
+  apply: I.div_correct =>//.
+  apply: I.sqr_correct.
+  by apply: Hnth; rewrite Hi3.
+have H2 : (a2 + a2 <> 0)%R by intro K; rewrite K Rplus_0_r in H4.
+suff->: s1 = Rmult x3 s2.
+  have->: Rmult a0 x0 = a0 by simpl; rewrite /x0 powerRZ_O Rmult_1_r.
+  rewrite -!Rplus_assoc /Rminus; congr Rplus.
+  rewrite /x1 /x2 /Rsqr.
+  field.
+  split =>//.
+by rewrite -Rplus_assoc in H4.
+rewrite /s1 /s2 /x3; clear.
+rewrite Rmult_comm.
+rewrite big_mkord big_distrl.
+apply: eq_bigr=> i _.
+rewrite /PolR.tail /PolR.nth nth_drop.
+(* some bookkeeping about powers *)
+rewrite -!(pow_powerRZ _ 3).
+rewrite /= !Rmult_assoc; f_equal; ring.
+by rewrite addnC leq_subnK.
+move=> i /andP [Hi _].
+by rewrite PolR.nth_default ?Rmult_0_l.
+Qed.
 
 Lemma ComputeBound_propagate :
   forall prec pi,
