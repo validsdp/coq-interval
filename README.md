@@ -1,3 +1,7 @@
+**Fork of coq-interval for the internship of Benjamin.**
+
+For the official repo URL, see <https://gitlab.inria.fr/coqinterval/interval>.
+
 CoqInterval
 ===========
 
