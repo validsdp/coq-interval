@@ -148,48 +148,71 @@ Definition div2 x := (x / 2)%float.
 Local Open Scope float_scope.
 
 Definition Eps64 := Eval compute in ldexp 1 (-53)%Z.
+Definition iEps64 := Eval compute in (1 / Eps64)%float.
 Definition Eta64 := Eval compute in ldexp 1 (-1074)%Z.
 Definition Phi64 := Eval compute in (Eps64 * (1 + (2 * Eps64)))%float.
 Definition Fmin64 := Eval compute in ((Eta64/Eps64)/2)%float.
+Definition tFmin64 := Eval compute in (2 * Fmin64)%float.
 
-Definition R2_next_up (c: PrimFloat.float) := 
-    if negb (abs (c) < (0.5%float * 1/(Eps64 * Eps64) * Eta64)) then
-        c + (Phi64 * abs c)
-    else
-        if abs (c) < (1/Eps64) * Eta64 then
+Definition c1 := Eval compute in (iEps64 * Eta64)%float.
+
+Definition R5Arith_UP
+    (a b: PrimFloat.float)
+    (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
+    let c := (op a b) in
+        if c <= c1 then
+            c + Phi64 * abs c
+        else 
+            if c < tFmin64 then
+                c + Eta64
+            else 
+                let C := (iEps64 * c) in
+                    Eps64 * (C + Phi64 * abs C).
+Definition R5Arith_DN
+    (a b: PrimFloat.float)
+    (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
+    let c := (op a b) in
+        if c <= c1 then
+            c - Phi64 * abs c
+        else 
+            if c < tFmin64 then
+                c - Eta64
+            else 
+                let C := (iEps64 * c) in
+                    Eps64 * (C - Phi64 * abs C).
+
+
+Definition add_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b add.
+Definition add_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b add.
+
+Definition sub_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b sub.
+Definition sub_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b sub.
+
+Definition mul_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b mul.
+Definition mul_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b mul.
+
+Definition div_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b div.
+Definition div_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b div.
+
+Definition sqrt_UP (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
+    if c <= c1 then
+        c + Phi64 * abs c
+    else 
+        if c < tFmin64 then
             c + Eta64
-        else
-            let C := ((1/Eps64) * c) in 
+        else 
+            let C := (iEps64 * c) in
                 Eps64 * (C + Phi64 * abs C).
-Definition R2_next_down (c: PrimFloat.float) := 
-    if negb (abs (c) < (0.5%float * 1/(Eps64 * Eps64) * Eta64)) then
-        c - (Phi64 * abs c)
-    else
-        if abs (c) < (1/Eps64) * Eta64 then
+Definition sqrt_DN (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
+    if c <= c1 then
+        c - Phi64 * abs c
+    else 
+        if c < tFmin64 then
             c - Eta64
-        else
-            let C := ((1/Eps64) * c) in 
+        else 
+            let C := (iEps64 * c) in
                 Eps64 * (C - Phi64 * abs C).
 
-Definition add_UP (_ : precision) x y := R2_next_up (x + y).
-
-Definition add_DN (_ : precision) x y := R2_next_down (x + y).
-
-Definition sub_UP (_ : precision) x y := R2_next_up (x - y).
-
-Definition sub_DN (_ : precision) x y := R2_next_down (x - y).
-
-Definition mul_UP (_ : precision) x y := R2_next_up (x * y).
-
-Definition mul_DN (_ : precision) x y := R2_next_down (x * y).
-
-Definition div_UP (_ : precision) x y := R2_next_up (x / y).
-
-Definition div_DN (_ : precision) x y := R2_next_down (x / y).
-
-Definition sqrt_UP (_ : precision) x := R2_next_up (PrimFloat.sqrt x).
-
-Definition sqrt_DN (_ : precision) x := R2_next_down (PrimFloat.sqrt x).
 
 Definition nearbyint_UP (mode : rounding_mode) (x : type) := nan.  (* TODO *)
 
