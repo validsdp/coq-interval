@@ -156,44 +156,136 @@ Definition Fmin64 := Eval compute in ((Eta64/Eps64)/2)%float.
 Definition c0 := Eval compute in 0.5%float * 1/(Eps64 * Eps64) * Eta64.
 Definition c1 := Eval compute in iEps64 * Eta64.
 
-Definition R2_next_up (c: PrimFloat.float) := 
-    if negb (abs (c) < c0) then
-        c + (Phi64 * abs c)
+Definition R2_next_up (c: PrimFloat.float) :=
+  let ac := abs c in
+    if negb (ac < c0) then
+      c + (Phi64 * abs c)
     else
-        if abs (c) < c1 then
-            c + Eta64
-        else
-            let C := (iEps64 * c) in 
-                Eps64 * (C + Phi64 * abs C).
-Definition R2_next_down (c: PrimFloat.float) := 
-    if negb (abs (c) < c0) then
-        c - (Phi64 * abs c)
+      if ac < c1 then
+        c + Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C + Phi64 * abs C).
+Definition R2_next_down (c: PrimFloat.float) :=
+  let ac := abs c in
+    if negb (ac < c0) then
+      c - (Phi64 * abs c)
     else
-        if abs (c) < c1 then
-            c - Eta64
-        else
-            let C := (iEps64 * c) in 
-                Eps64 * (C - Phi64 * abs C).
+      if ac < c1 then
+        c - Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C - Phi64 * abs C).
 
-Definition add_UP (_ : precision) x y := R2_next_up (x + y).
+Definition add_UP (_ : precision) x y := let c := (x + y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c + (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c + Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C + Phi64 * abs C).
 
-Definition add_DN (_ : precision) x y := R2_next_down (x + y).
+Definition add_DN (_ : precision) x y := let c := (x + y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c - (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c - Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C - Phi64 * abs C).
 
-Definition sub_UP (_ : precision) x y := R2_next_up (x - y).
+Definition sub_UP (_ : precision) x y := let c := (x - y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c + (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c + Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C + Phi64 * abs C).
 
-Definition sub_DN (_ : precision) x y := R2_next_down (x - y).
+Definition sub_DN (_ : precision) x y := let c := (x - y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c - (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c - Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C - Phi64 * abs C).
 
-Definition mul_UP (_ : precision) x y := R2_next_up (x * y).
+Definition mul_UP (_ : precision) x y := let c := (x * y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c + (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c + Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C + Phi64 * abs C).
 
-Definition mul_DN (_ : precision) x y := R2_next_down (x * y).
+Definition mul_DN (_ : precision) x y := let c := (x * y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c - (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c - Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C - Phi64 * abs C).
 
-Definition div_UP (_ : precision) x y := R2_next_up (x / y).
+Definition div_UP (_ : precision) x y := let c := (x / y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c + (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c + Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C + Phi64 * abs C).
 
-Definition div_DN (_ : precision) x y := R2_next_down (x / y).
+Definition div_DN (_ : precision) x y := let c := (x / y) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c - (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c - Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C - Phi64 * abs C).
 
-Definition sqrt_UP (_ : precision) x := R2_next_up (PrimFloat.sqrt x).
+Definition sqrt_UP (_ : precision) x := let c := (PrimFloat.sqrt x) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c + (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c + Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C + Phi64 * abs C).
 
-Definition sqrt_DN (_ : precision) x := R2_next_down (PrimFloat.sqrt x).
+Definition sqrt_DN (_ : precision) x := let c := (PrimFloat.sqrt x) in
+  let ac := abs c in
+    if negb (ac < c0) then
+      c - (Phi64 * abs c)
+    else
+      if ac < c1 then
+        c - Eta64
+      else
+        let C := (iEps64 * c) in 
+          Eps64 * (C - Phi64 * abs C).
 
 Definition nearbyint_UP (mode : rounding_mode) (x : type) := nan.  (* TODO *)
 

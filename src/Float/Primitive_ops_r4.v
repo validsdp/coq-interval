@@ -153,29 +153,40 @@ Definition Phi64 := Eval compute in (Eps64 * (1 + (2 * Eps64)))%float.
 Definition Fmin64 := Eval compute in ((Eta64/Eps64)/2)%float.
 
 Definition R4Arith_UP
-    (a b: PrimFloat.float) 
-    (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
-    let c := (op a b) in
-        c + (Phi64 * abs c + Eta64).
+  (a b: PrimFloat.float) 
+  (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
+  let c := (op a b) in
+      c + (Phi64 * abs c + Eta64).
 Definition R4Arith_DN
-    (a b: PrimFloat.float) 
-    (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
-    let c := (op a b) in
-        c - (Phi64 * abs c + Eta64).
+  (a b: PrimFloat.float) 
+  (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
+  let c := (op a b) in
+      c - (Phi64 * abs c + Eta64).
 
-Definition add_UP (_ : precision) (a b: PrimFloat.float) := R4Arith_UP a b add.
-Definition add_DN (_ : precision) (a b: PrimFloat.float) := R4Arith_DN a b add.
+Definition add_UP (_ : precision) (a b: PrimFloat.float) := let c := (add a b) in
+  c + (Phi64 * abs c + Eta64).
+Definition add_DN (_ : precision) (a b: PrimFloat.float) := let c := (add a b) in
+  c - (Phi64 * abs c + Eta64).
 
-Definition sub_UP (_ : precision) (a b: PrimFloat.float) := R4Arith_UP a b sub.
-Definition sub_DN (_ : precision) (a b: PrimFloat.float) := R4Arith_DN a b sub.
+Definition sub_UP (_ : precision) (a b: PrimFloat.float) := let c := (sub a b) in
+  c + (Phi64 * abs c + Eta64).
+Definition sub_DN (_ : precision) (a b: PrimFloat.float) := let c := (sub a b) in
+  c - (Phi64 * abs c + Eta64).
 
-Definition mul_UP (_ : precision) (a b: PrimFloat.float) := R4Arith_UP a b mul.
-Definition mul_DN (_ : precision) (a b: PrimFloat.float) := R4Arith_DN a b mul.
+Definition mul_UP (_ : precision) (a b: PrimFloat.float) := let c := (mul a b) in
+  c + (Phi64 * abs c + Eta64).
+Definition mul_DN (_ : precision) (a b: PrimFloat.float) := let c := (mul a b) in
+  c - (Phi64 * abs c + Eta64).
 
-Definition div_UP (_ : precision) (a b: PrimFloat.float) := R4Arith_UP a b div.
-Definition div_DN (_ : precision) (a b: PrimFloat.float) := R4Arith_DN a b div.
-Definition sqrt_UP (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in c + (Phi64 * abs c + Eta64).
-Definition sqrt_DN (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in c - (Phi64 * abs c + Eta64).
+Definition div_UP (_ : precision) (a b: PrimFloat.float) := let c := (div a b) in
+  c + (Phi64 * abs c + Eta64).
+Definition div_DN (_ : precision) (a b: PrimFloat.float) := let c := (div a b) in
+  c - (Phi64 * abs c + Eta64).
+
+Definition sqrt_UP (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
+  c + (Phi64 * abs c + Eta64).
+Definition sqrt_DN (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
+  c - (Phi64 * abs c + Eta64).
 
 Definition nearbyint_UP (mode : rounding_mode) (x : type) := nan.  (* TODO *)
 

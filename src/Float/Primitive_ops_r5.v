@@ -182,17 +182,81 @@ Definition R5Arith_DN
                     Eps64 * (C - Phi64 * abs C).
 
 
-Definition add_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b add.
-Definition add_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b add.
+Definition add_UP (_ : precision) (a b: PrimFloat.float) := let c := (add a b) in
+if c <= c1 then
+    c + Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c + Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C + Phi64 * abs C).
+Definition add_DN (_ : precision) (a b: PrimFloat.float) := let c := (add a b) in
+if c <= c1 then
+    c - Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c - Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C - Phi64 * abs C).
 
-Definition sub_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b sub.
-Definition sub_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b sub.
+Definition sub_UP (_ : precision) (a b: PrimFloat.float) := let c := (sub a b) in
+if c <= c1 then
+    c + Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c + Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C + Phi64 * abs C).
+Definition sub_DN (_ : precision) (a b: PrimFloat.float) := let c := (sub a b) in
+if c <= c1 then
+    c - Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c - Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C - Phi64 * abs C).
 
-Definition mul_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b mul.
-Definition mul_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b mul.
+Definition mul_UP (_ : precision) (a b: PrimFloat.float) := let c := (mul a b) in
+if c <= c1 then
+    c + Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c + Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C + Phi64 * abs C).
+Definition mul_DN (_ : precision) (a b: PrimFloat.float) := let c := (mul a b) in
+if c <= c1 then
+    c - Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c - Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C - Phi64 * abs C).
 
-Definition div_UP (_ : precision) (a b: PrimFloat.float) := R5Arith_UP a b div.
-Definition div_DN (_ : precision) (a b: PrimFloat.float) := R5Arith_DN a b div.
+Definition div_UP (_ : precision) (a b: PrimFloat.float) := let c := (div a b) in
+if c <= c1 then
+    c + Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c + Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C + Phi64 * abs C).
+Definition div_DN (_ : precision) (a b: PrimFloat.float) := let c := (div a b) in
+if c <= c1 then
+    c - Phi64 * abs c
+else 
+    if c < tFmin64 then
+        c - Eta64
+    else 
+        let C := (iEps64 * c) in
+            Eps64 * (C - Phi64 * abs C).
 
 Definition sqrt_UP (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
     if c <= c1 then
