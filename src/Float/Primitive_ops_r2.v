@@ -159,7 +159,7 @@ Definition c1 := Eval compute in iEps64 * Eta64.
 Definition R2_next_up (c: PrimFloat.float) :=
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -169,7 +169,7 @@ Definition R2_next_up (c: PrimFloat.float) :=
 Definition R2_next_down (c: PrimFloat.float) :=
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -180,18 +180,17 @@ Definition R2_next_down (c: PrimFloat.float) :=
 Definition add_UP (_ : precision) x y := let c := (x + y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
       else
         let C := (iEps64 * c) in 
-          Eps64 * (C + Phi64 * abs C).
-
+          Eps64 * (C + (Phi64 * abs C)).
 Definition add_DN (_ : precision) x y := let c := (x + y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -202,7 +201,7 @@ Definition add_DN (_ : precision) x y := let c := (x + y) in
 Definition sub_UP (_ : precision) x y := let c := (x - y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -213,7 +212,7 @@ Definition sub_UP (_ : precision) x y := let c := (x - y) in
 Definition sub_DN (_ : precision) x y := let c := (x - y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -224,7 +223,7 @@ Definition sub_DN (_ : precision) x y := let c := (x - y) in
 Definition mul_UP (_ : precision) x y := let c := (x * y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -235,7 +234,7 @@ Definition mul_UP (_ : precision) x y := let c := (x * y) in
 Definition mul_DN (_ : precision) x y := let c := (x * y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -246,7 +245,7 @@ Definition mul_DN (_ : precision) x y := let c := (x * y) in
 Definition div_UP (_ : precision) x y := let c := (x / y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -257,7 +256,7 @@ Definition div_UP (_ : precision) x y := let c := (x / y) in
 Definition div_DN (_ : precision) x y := let c := (x / y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -268,7 +267,7 @@ Definition div_DN (_ : precision) x y := let c := (x / y) in
 Definition sqrt_UP (_ : precision) x := let c := (PrimFloat.sqrt x) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -279,7 +278,7 @@ Definition sqrt_UP (_ : precision) x := let c := (PrimFloat.sqrt x) in
 Definition sqrt_DN (_ : precision) x := let c := (PrimFloat.sqrt x) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64

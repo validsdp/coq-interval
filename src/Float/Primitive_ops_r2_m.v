@@ -199,7 +199,7 @@ r11) (only parsing).
 Definition add_UPn x y := let c := (x + y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -210,7 +210,7 @@ Definition add_UPn x y := let c := (x + y) in
 Definition add_DNn x y := let c := (x + y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -221,7 +221,7 @@ Definition add_DNn x y := let c := (x + y) in
 Definition sub_UPn x y := let c := (x - y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -232,7 +232,7 @@ Definition sub_UPn x y := let c := (x - y) in
 Definition sub_DNn x y := let c := (x - y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -243,7 +243,7 @@ Definition sub_DNn x y := let c := (x - y) in
 Definition mul_UPn x y := let c := (x * y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -254,7 +254,7 @@ Definition mul_UPn x y := let c := (x * y) in
 Definition mul_DNn x y := let c := (x * y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -265,7 +265,7 @@ Definition mul_DNn x y := let c := (x * y) in
 Definition div_UPn x y := let c := (x / y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -276,7 +276,7 @@ Definition div_UPn x y := let c := (x / y) in
 Definition div_DNn x y := let c := (x / y) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64
@@ -287,7 +287,7 @@ Definition div_DNn x y := let c := (x / y) in
 Definition sqrt_UPn x (_ : PrimFloat.float) := let c := (PrimFloat.sqrt x) in
   let ac := abs c in
     if negb (ac < c0) then
-      c + (Phi64 * abs c)
+      c + (Phi64 * ac)
     else
       if ac < c1 then
         c + Eta64
@@ -298,7 +298,7 @@ Definition sqrt_UPn x (_ : PrimFloat.float) := let c := (PrimFloat.sqrt x) in
 Definition sqrt_DNn x (_ : PrimFloat.float) := let c := (PrimFloat.sqrt x) in
   let ac := abs c in
     if negb (ac < c0) then
-      c - (Phi64 * abs c)
+      c - (Phi64 * ac)
     else
       if ac < c1 then
         c - Eta64

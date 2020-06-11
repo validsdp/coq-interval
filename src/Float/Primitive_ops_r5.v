@@ -156,127 +156,100 @@ Definition tFmin64 := Eval compute in (2 * Fmin64)%float.
 
 Definition c1 := Eval compute in (iEps64 * Eta64)%float.
 
-Definition R5Arith_UP
-    (a b: PrimFloat.float)
-    (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
-    let c := (op a b) in
-        if c <= c1 then
-            c + Phi64 * abs c
-        else 
-            if c < tFmin64 then
-                c + Eta64
-            else 
-                let C := (iEps64 * c) in
-                    Eps64 * (C + Phi64 * abs C).
-Definition R5Arith_DN
-    (a b: PrimFloat.float)
-    (op: PrimFloat.float -> PrimFloat.float -> PrimFloat.float) := 
-    let c := (op a b) in
-        if c <= c1 then
-            c - Phi64 * abs c
-        else 
-            if c < tFmin64 then
-                c - Eta64
-            else 
-                let C := (iEps64 * c) in
-                    Eps64 * (C - Phi64 * abs C).
+Definition add_UP (_ : precision) (a b: PrimFloat.float) := 
+  let c := (add a b) in let cabs := (abs c) in
+  if negb (cabs < c1) then
+    c + (Phi64 * cabs)
+  else 
+    if c < tFmin64 then
+      c + Eta64
+    else let C := (iEps64 * c) in
+      Eps64 * (C + Phi64 * abs C).
+Definition add_DN (_ : precision) (a b: PrimFloat.float) :=
+  let c := (add a b) in let cabs := (abs c) in
+  if negb (cabs < c1) then
+    c - (Phi64 * cabs)
+  else 
+    if c < tFmin64 then
+      c - Eta64
+    else let C := (iEps64 * c) in
+      Eps64 * (C - Phi64 * abs C).
 
+Definition sub_UP (_ : precision) (a b: PrimFloat.float) :=
+let c := (sub a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c + (Phi64 * cabs)
+else 
+  if c < tFmin64 then
+    c + Eta64
+  else let C := (iEps64 * c) in
+    Eps64 * (C + Phi64 * abs C).
+Definition sub_DN (_ : precision) (a b: PrimFloat.float) :=
+let c := (sub a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
+else 
+if c < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
-Definition add_UP (_ : precision) (a b: PrimFloat.float) := let c := (add a b) in
-if c <= c1 then
-    c + Phi64 * abs c
+Definition mul_UP (_ : precision) (a b: PrimFloat.float) :=
+let c := (mul a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+  c + (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition add_DN (_ : precision) (a b: PrimFloat.float) := let c := (add a b) in
-if c <= c1 then
-    c - Phi64 * abs c
+  if c < tFmin64 then
+    c + Eta64
+  else let C := (iEps64 * c) in
+    Eps64 * (C + Phi64 * abs C).
+Definition mul_DN (_ : precision) (a b: PrimFloat.float) :=
+let c := (mul a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
+if c < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
-Definition sub_UP (_ : precision) (a b: PrimFloat.float) := let c := (sub a b) in
-if c <= c1 then
-    c + Phi64 * abs c
+Definition div_UP (_ : precision) (a b: PrimFloat.float) :=
+let c := (div a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c + (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition sub_DN (_ : precision) (a b: PrimFloat.float) := let c := (sub a b) in
-if c <= c1 then
-    c - Phi64 * abs c
+if c < tFmin64 then
+  c + Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C + Phi64 * abs C).
+Definition div_DN (_ : precision) (a b: PrimFloat.float) :=
+let c := (div a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
+if c < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
-Definition mul_UP (_ : precision) (a b: PrimFloat.float) := let c := (mul a b) in
-if c <= c1 then
-    c + Phi64 * abs c
+Definition sqrt_UP (_ : precision) (a: PrimFloat.float) :=
+let c := (PrimFloat.sqrt a) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c + (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition mul_DN (_ : precision) (a b: PrimFloat.float) := let c := (mul a b) in
-if c <= c1 then
-    c - Phi64 * abs c
+if c < tFmin64 then
+  c + Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C + Phi64 * abs C).
+Definition sqrt_DN (_ : precision) (a: PrimFloat.float) :=
+let c := (PrimFloat.sqrt a) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
-
-Definition div_UP (_ : precision) (a b: PrimFloat.float) := let c := (div a b) in
-if c <= c1 then
-    c + Phi64 * abs c
-else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition div_DN (_ : precision) (a b: PrimFloat.float) := let c := (div a b) in
-if c <= c1 then
-    c - Phi64 * abs c
-else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
-
-Definition sqrt_UP (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
-    if c <= c1 then
-        c + Phi64 * abs c
-    else 
-        if c < tFmin64 then
-            c + Eta64
-        else 
-            let C := (iEps64 * c) in
-                Eps64 * (C + Phi64 * abs C).
-Definition sqrt_DN (_ : precision) (a: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
-    if c <= c1 then
-        c - Phi64 * abs c
-    else 
-        if c < tFmin64 then
-            c - Eta64
-        else 
-            let C := (iEps64 * c) in
-                Eps64 * (C - Phi64 * abs C).
-
+if c < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
 Definition nearbyint_UP (mode : rounding_mode) (x : type) := nan.  (* TODO *)
 
