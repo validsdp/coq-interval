@@ -195,6 +195,19 @@ Notation doubling2 f x y := (let r1 := (doubling'' f x y) in
                           let r11 := f%function x%float y%float in
                           select_float11c r1 r2 r3 r4 r5 r6 r7 r8 r9 r10
 r11) (only parsing).
+Notation doubling100 f x y := (let r1 := (doubling' f x y) in
+                          let r2 := (doubling' f x y) in
+                          let r3 := (doubling' f x y) in
+                          let r4 := (doubling' f x y) in
+                          let r5 := (doubling' f x y) in
+                          let r6 := (doubling' f x y) in
+                          let r7 := (doubling' f x y) in
+                          let r8 := (doubling' f x y) in
+                          let r9 := (doubling' f x y) in
+                          let r10 := (doubling' f x y) in
+                          let r11 := f%function x%float y%float in
+                          select_float11c r1 r2 r3 r4 r5 r6 r7 r8 r9 r10
+r11) (only parsing).
 
 Definition R5Arith_UP
     (a b: PrimFloat.float)
@@ -222,115 +235,115 @@ Definition R5Arith_DN
                     Eps64 * (C - Phi64 * abs C).
 
 
-Definition add_UPn (a b: PrimFloat.float) := let c := (add a b) in
-if c <= c1 then
-    c + Phi64 * abs c
+Definition add_UPn (a b: PrimFloat.float) :=
+let c := (add a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+  c + (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition add_DNn (a b: PrimFloat.float) := let c := (add a b) in
-if c <= c1 then
-    c - Phi64 * abs c
+  if c < tFmin64 then
+    c + Eta64
+  else let C := (iEps64 * c) in
+    Eps64 * (C + Phi64 * abs C).
+Definition add_DNn (a b: PrimFloat.float) :=
+let c := (add a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+  c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
+  if cabs < tFmin64 then
+    c - Eta64
+  else let C := (iEps64 * c) in
+    Eps64 * (C - Phi64 * abs C).
 
-Definition sub_UPn (a b: PrimFloat.float) := let c := (sub a b) in
-if c <= c1 then
-    c + Phi64 * abs c
+Definition sub_UPn (a b: PrimFloat.float) :=
+let c := (sub a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c + (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition sub_DNn (a b: PrimFloat.float) := let c := (sub a b) in
-if c <= c1 then
-    c - Phi64 * abs c
+  if cabs < tFmin64 then
+    c + Eta64
+  else let C := (iEps64 * c) in
+    Eps64 * (C + Phi64 * abs C).
+Definition sub_DNn (a b: PrimFloat.float) :=
+let c := (sub a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
+if cabs < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
-Definition mul_UPn (a b: PrimFloat.float) := let c := (mul a b) in
-if c <= c1 then
-    c + Phi64 * abs c
+Definition mul_UPn (a b: PrimFloat.float) :=
+let c := (mul a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+  c + (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition mul_DNn (a b: PrimFloat.float) := let c := (mul a b) in
-if c <= c1 then
-    c - Phi64 * abs c
+  if cabs < tFmin64 then
+    c + Eta64
+  else let C := (iEps64 * c) in
+    Eps64 * (C + Phi64 * abs C).
+Definition mul_DNn (a b: PrimFloat.float) :=
+let c := (mul a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
+if cabs < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
-Definition div_UPn (a b: PrimFloat.float) := let c := (div a b) in
-if c <= c1 then
-    c + Phi64 * abs c
+Definition div_UPn (a b: PrimFloat.float) :=
+let c := (div a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c + Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C + Phi64 * abs C).
-Definition div_DNn (a b: PrimFloat.float) := let c := (div a b) in
-if c <= c1 then
-    c - Phi64 * abs c
+if cabs < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
+Definition div_DNn (a b: PrimFloat.float) :=
+let c := (div a b) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
 else 
-    if c < tFmin64 then
-        c - Eta64
-    else 
-        let C := (iEps64 * c) in
-            Eps64 * (C - Phi64 * abs C).
+if cabs < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
-Definition sqrt_UPn (a _: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
-    if c <= c1 then
-        c + Phi64 * abs c
-    else 
-        if c < tFmin64 then
-            c + Eta64
-        else 
-            let C := (iEps64 * c) in
-                Eps64 * (C + Phi64 * abs C).
-Definition sqrt_DNn (a _: PrimFloat.float) := let c := (PrimFloat.sqrt a) in
-    if c <= c1 then
-        c - Phi64 * abs c
-    else 
-        if c < tFmin64 then
-            c - Eta64
-        else 
-            let C := (iEps64 * c) in
-                Eps64 * (C - Phi64 * abs C).
+Definition sqrt_UPn (a _: PrimFloat.float) :=
+let c := (PrimFloat.sqrt a) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c + (Phi64 * cabs)
+else 
+if cabs < tFmin64 then
+  c + Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C + Phi64 * abs C).
+Definition sqrt_DNn (a _: PrimFloat.float) :=
+let c := (PrimFloat.sqrt a) in let cabs := (abs c) in
+if negb (cabs < c1) then
+c - (Phi64 * cabs)
+else 
+if cabs < tFmin64 then
+  c - Eta64
+else let C := (iEps64 * c) in
+  Eps64 * (C - Phi64 * abs C).
 
-Definition add_UP (_ : precision) x y := doubling2 add_UPn x y.
-Definition add_DN (_ : precision) x y := doubling2 add_DNn x y.
+Definition add_UP (_ : precision) x y := doubling100 add_UPn x y.
+Definition add_DN (_ : precision) x y := doubling100 add_DNn x y.
 
-Definition sub_UP (_ : precision) x y := doubling2 sub_UPn x y.
-Definition sub_DN (_ : precision) x y := doubling2 sub_DNn x y.
+Definition sub_UP (_ : precision) x y := doubling100 sub_UPn x y.
+Definition sub_DN (_ : precision) x y := doubling100 sub_DNn x y.
 
-Definition mul_UP (_ : precision) x y := doubling2 mul_UPn x y.
-Definition mul_DN (_ : precision) x y := doubling2 mul_DNn x y.
+Definition mul_UP (_ : precision) x y := doubling100 mul_UPn x y.
+Definition mul_DN (_ : precision) x y := doubling100 mul_DNn x y.
 
-Definition div_UP (_ : precision) x y := doubling2 div_UPn x y.
-Definition div_DN (_ : precision) x y := doubling2 div_DNn x y.
+Definition div_UP (_ : precision) x y := doubling100 div_UPn x y.
+Definition div_DN (_ : precision) x y := doubling100 div_DNn x y.
 
-Definition sqrt_UP (_ : precision) x := doubling2 sqrt_UPn x 0.
-Definition sqrt_DN (_ : precision) x := doubling2 sqrt_DNn x 0.
+Definition sqrt_UP (_ : precision) x := doubling100 sqrt_UPn x 0.
+Definition sqrt_DN (_ : precision) x := doubling100 sqrt_DNn x 0.
 
 
 Definition nearbyint_UP (mode : rounding_mode) (x : type) := nan.  (* TODO *)

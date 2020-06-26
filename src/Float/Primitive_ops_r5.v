@@ -161,7 +161,7 @@ Definition add_UP (_ : precision) (a b: PrimFloat.float) :=
   if negb (cabs < c1) then
     c + (Phi64 * cabs)
   else 
-    if c < tFmin64 then
+    if cabs < tFmin64 then
       c + Eta64
     else let C := (iEps64 * c) in
       Eps64 * (C + Phi64 * abs C).
@@ -170,7 +170,7 @@ Definition add_DN (_ : precision) (a b: PrimFloat.float) :=
   if negb (cabs < c1) then
     c - (Phi64 * cabs)
   else 
-    if c < tFmin64 then
+    if cabs < tFmin64 then
       c - Eta64
     else let C := (iEps64 * c) in
       Eps64 * (C - Phi64 * abs C).
@@ -180,7 +180,7 @@ let c := (sub a b) in let cabs := (abs c) in
 if negb (cabs < c1) then
 c + (Phi64 * cabs)
 else 
-  if c < tFmin64 then
+  if cabs < tFmin64 then
     c + Eta64
   else let C := (iEps64 * c) in
     Eps64 * (C + Phi64 * abs C).
@@ -189,7 +189,7 @@ let c := (sub a b) in let cabs := (abs c) in
 if negb (cabs < c1) then
 c - (Phi64 * cabs)
 else 
-if c < tFmin64 then
+if cabs < tFmin64 then
   c - Eta64
 else let C := (iEps64 * c) in
   Eps64 * (C - Phi64 * abs C).
@@ -199,7 +199,7 @@ let c := (mul a b) in let cabs := (abs c) in
 if negb (cabs < c1) then
   c + (Phi64 * cabs)
 else 
-  if c < tFmin64 then
+  if cabs < tFmin64 then
     c + Eta64
   else let C := (iEps64 * c) in
     Eps64 * (C + Phi64 * abs C).
@@ -208,7 +208,7 @@ let c := (mul a b) in let cabs := (abs c) in
 if negb (cabs < c1) then
 c - (Phi64 * cabs)
 else 
-if c < tFmin64 then
+if cabs < tFmin64 then
   c - Eta64
 else let C := (iEps64 * c) in
   Eps64 * (C - Phi64 * abs C).
@@ -218,7 +218,7 @@ let c := (div a b) in let cabs := (abs c) in
 if negb (cabs < c1) then
 c + (Phi64 * cabs)
 else 
-if c < tFmin64 then
+if cabs < tFmin64 then
   c + Eta64
 else let C := (iEps64 * c) in
   Eps64 * (C + Phi64 * abs C).
@@ -227,7 +227,7 @@ let c := (div a b) in let cabs := (abs c) in
 if negb (cabs < c1) then
 c - (Phi64 * cabs)
 else 
-if c < tFmin64 then
+if cabs < tFmin64 then
   c - Eta64
 else let C := (iEps64 * c) in
   Eps64 * (C - Phi64 * abs C).
@@ -237,7 +237,7 @@ let c := (PrimFloat.sqrt a) in let cabs := (abs c) in
 if negb (cabs < c1) then
 c + (Phi64 * cabs)
 else 
-if c < tFmin64 then
+if cabs < tFmin64 then
   c + Eta64
 else let C := (iEps64 * c) in
   Eps64 * (C + Phi64 * abs C).
@@ -246,7 +246,7 @@ let c := (PrimFloat.sqrt a) in let cabs := (abs c) in
 if negb (cabs < c1) then
 c - (Phi64 * cabs)
 else 
-if c < tFmin64 then
+if cabs < tFmin64 then
   c - Eta64
 else let C := (iEps64 * c) in
   Eps64 * (C - Phi64 * abs C).

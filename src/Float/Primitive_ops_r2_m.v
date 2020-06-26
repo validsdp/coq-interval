@@ -195,131 +195,144 @@ Notation doubling2 f x y := (let r1 := (doubling'' f x y) in
                           let r11 := f%function x%float y%float in
                           select_float11c r1 r2 r3 r4 r5 r6 r7 r8 r9 r10
 r11) (only parsing).
+Notation doubling100 f x y := (let r1 := (doubling' f x y) in
+                          let r2 := (doubling' f x y) in
+                          let r3 := (doubling' f x y) in
+                          let r4 := (doubling' f x y) in
+                          let r5 := (doubling' f x y) in
+                          let r6 := (doubling' f x y) in
+                          let r7 := (doubling' f x y) in
+                          let r8 := (doubling' f x y) in
+                          let r9 := (doubling' f x y) in
+                          let r10 := (doubling' f x y) in
+                          let r11 := f%function x%float y%float in
+                          select_float11c r1 r2 r3 r4 r5 r6 r7 r8 r9 r10
+r11) (only parsing).
 
 Definition add_UPn x y := let c := (x + y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c + (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c + (Phi64 * ac)
+  else
+    if ac < c1 then
+      c + Eta64
     else
-      if ac < c1 then
-        c + Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C + Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C + (Phi64 * abs C)).
 
 Definition add_DNn x y := let c := (x + y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c - (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c - (Phi64 * ac)
+  else
+    if ac < c1 then
+      c - Eta64
     else
-      if ac < c1 then
-        c - Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C - Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C - Phi64 * abs C).
 
 Definition sub_UPn x y := let c := (x - y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c + (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c + (Phi64 * ac)
+  else
+    if ac < c1 then
+      c + Eta64
     else
-      if ac < c1 then
-        c + Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C + Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C + Phi64 * abs C).
 
 Definition sub_DNn x y := let c := (x - y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c - (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c - (Phi64 * ac)
+  else
+    if ac < c1 then
+      c - Eta64
     else
-      if ac < c1 then
-        c - Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C - Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C - Phi64 * abs C).
 
 Definition mul_UPn x y := let c := (x * y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c + (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c + (Phi64 * ac)
+  else
+    if ac < c1 then
+      c + Eta64
     else
-      if ac < c1 then
-        c + Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C + Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C + Phi64 * abs C).
 
 Definition mul_DNn x y := let c := (x * y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c - (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c - (Phi64 * ac)
+  else
+    if ac < c1 then
+      c - Eta64
     else
-      if ac < c1 then
-        c - Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C - Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C - Phi64 * abs C).
 
 Definition div_UPn x y := let c := (x / y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c + (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c + (Phi64 * ac)
+  else
+    if ac < c1 then
+      c + Eta64
     else
-      if ac < c1 then
-        c + Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C + Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C + Phi64 * abs C).
 
 Definition div_DNn x y := let c := (x / y) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c - (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c - (Phi64 * ac)
+  else
+    if ac < c1 then
+      c - Eta64
     else
-      if ac < c1 then
-        c - Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C - Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C - Phi64 * abs C).
 
 Definition sqrt_UPn x (_ : PrimFloat.float) := let c := (PrimFloat.sqrt x) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c + (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c + (Phi64 * ac)
+  else
+    if ac < c1 then
+      c + Eta64
     else
-      if ac < c1 then
-        c + Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C + Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C + Phi64 * abs C).
 
 Definition sqrt_DNn x (_ : PrimFloat.float) := let c := (PrimFloat.sqrt x) in
-  let ac := abs c in
-    if negb (ac < c0) then
-      c - (Phi64 * ac)
+let ac := abs c in
+  if negb (ac < c0) then
+    c - (Phi64 * ac)
+  else
+    if ac < c1 then
+      c - Eta64
     else
-      if ac < c1 then
-        c - Eta64
-      else
-        let C := (iEps64 * c) in 
-          Eps64 * (C - Phi64 * abs C).
+      let C := (iEps64 * c) in 
+        Eps64 * (C - Phi64 * abs C).
 
-Definition add_UP (_ : precision) x y := doubling2 add_UPn x y.
-Definition add_DN (_ : precision) x y := doubling2 add_DNn x y.
+Definition add_UP (_ : precision) x y := doubling100 add_UPn x y.
+Definition add_DN (_ : precision) x y := doubling100 add_DNn x y.
 
-Definition sub_UP (_ : precision) x y := doubling2 sub_UPn x y.
-Definition sub_DN (_ : precision) x y := doubling2 sub_DNn x y.
+Definition sub_UP (_ : precision) x y := doubling100 sub_UPn x y.
+Definition sub_DN (_ : precision) x y := doubling100 sub_DNn x y.
 
-Definition mul_UP (_ : precision) x y := doubling2 mul_UPn x y.
-Definition mul_DN (_ : precision) x y := doubling2 mul_DNn x y.
+Definition mul_UP (_ : precision) x y := doubling100 mul_UPn x y.
+Definition mul_DN (_ : precision) x y := doubling100 mul_DNn x y.
 
-Definition div_UP (_ : precision) x y := doubling2 div_UPn x y.
-Definition div_DN (_ : precision) x y := doubling2 div_DNn x y.
+Definition div_UP (_ : precision) x y := doubling100 div_UPn x y.
+Definition div_DN (_ : precision) x y := doubling100 div_DNn x y.
 
-Definition sqrt_UP (_ : precision) x := doubling2 sqrt_UPn x 0.
-Definition sqrt_DN (_ : precision) x := doubling2 sqrt_DNn x 0.
+Definition sqrt_UP (_ : precision) x := doubling100 sqrt_UPn x 0.
+Definition sqrt_DN (_ : precision) x := doubling100 sqrt_DNn x 0.
 
 Definition nearbyint_UP (mode : rounding_mode) (x : type) := nan.  (* TODO *)
 
