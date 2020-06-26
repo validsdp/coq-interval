@@ -55,6 +55,8 @@ let ac := Rabs c in
   else
     (c + R_Phi64 * ac)%R.
 
+Eval compute in bpow radix2 (FLT_exp emin prec 1).
+
 Lemma C_UP_R_def: forall u, format u -> C_UP_R u = succ radix2 (FLT_exp emin prec) u.
 Proof with auto with typeclass_instances.
 intros u form.
@@ -67,9 +69,21 @@ unfold C_UP_R.
 destruct (Rlt_bool (Rabs u) R_c0) eqn:ineq1.
 destruct (Rlt_bool (Rabs u) R_c1) eqn:ineq2.
 apply f_equal2. trivial.
+admit. (* Trivial *)
 unfold ulp_flt.
 destruct (Req_bool u 0) eqn:is_zero.
+destruct (negligible_exp) eqn:neg.
+admit. (* Preuve Scaling *)
+admit. (* Trivial : Contradiction *)
+unfold cexp.
+admit. (* Preuve else-if *)
+unfold ulp_flt.
+destruct (Req_bool u 0) eqn:is_zero.
+admit. (* Trivial : Contradiction *)
+unfold cexp.
+admit. (* Preuve normale *)
 }
+admit. (* Preuve pour négatif *)
 Admitted.
 
 
