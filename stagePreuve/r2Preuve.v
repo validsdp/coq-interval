@@ -7,14 +7,20 @@ Existing Instance Hmax.
 Local Open Scope float_scope.
 
 Definition Eps64 := Eval compute in ldexp 1 (-53)%Z.
+Definition R_Eps64 := bpow radix2 (-53)%Z.
 Definition iEps64 := Eval compute in (1 / Eps64)%float.
+Definition R_iEps64 := bpow radix2 53%Z.
 Definition Eta64 := Eval compute in ldexp 1 (-1074)%Z.
+Definition R_Eta64 := bpow radix2 (-1074)%Z.
 Definition Phi64 := Eval compute in (Eps64 * (1 + (2 * Eps64)))%float.
+Definition R_Phi64 := succ radix2 (FLT_exp emin prec) R_Eps64.
 Definition Fmin64 := Eval compute in ((Eta64/Eps64)/2)%float.
 Definition tFmin64 := Eval compute in (2 * Fmin64)%float.
 
 Definition c0 := Eval compute in 0.5%float * 1/(Eps64 * Eps64) * Eta64.
+Definition R_c0 := bpow radix2 (-969)%Z.
 Definition c1 := Eval compute in (iEps64 * Eta64)%float.
+Definition R_c1 := bpow radix2 (-1021)%Z.
 
 Definition C_UP_prim (c : PrimFloat.float) :=
 let ac := abs c in
@@ -36,9 +42,38 @@ Notation ulp_flt := (ulp radix2 (FLT_exp emin prec)).
 Notation cexp := (cexp radix2 (FLT_exp emin prec)).
 Notation pred_flt := (pred radix2 (FLT_exp emin prec)).
 
-Lemma succDef: B2Prim (Bsucc (B754_finite s m e e0)) = 
+Definition Prim2R (x : PrimFloat.float) := B2R (Prim2B x).
 
-Theorem Rump2009_2_3: forall u : PrimFloat.float,
+Definition C_UP_R (c : R) :=
+let ac := Rabs c in
+  if Rlt_bool ac R_c0 then
+    if Rlt_bool ac R_c1 then
+      (c + R_Eta64)%R
+    else
+      let C := (R_iEps64 * c)%R in 
+      (R_Eps64 * (C + (R_Phi64 * Rabs C)))%R
+  else
+    (c + R_Phi64 * ac)%R.
+
+Lemma C_UP_R_def: forall u, format u -> C_UP_R u = succ radix2 (FLT_exp emin prec) u.
+Proof with auto with typeclass_instances.
+intros u form.
+apply FLT_format_generic in form...
+destruct form as [uf H1 H2 H3].
+unfold succ.
+destruct (Rle_bool 0 u) eqn:is_positive.
+{
+unfold C_UP_R.
+destruct (Rlt_bool (Rabs u) R_c0) eqn:ineq1.
+destruct (Rlt_bool (Rabs u) R_c1) eqn:ineq2.
+apply f_equal2. trivial.
+unfold ulp_flt.
+destruct (Req_bool u 0) eqn:is_zero.
+}
+Admitted.
+
+
+(*Theorem Rump2009_2_3: forall u : PrimFloat.float,
   (PrimFloat.is_finite u) = true -> (C_UP u) = (next_up u).
 Proof.
 intro u.
@@ -81,10 +116,10 @@ easy.
   admit.
   admit.
 }
-Admitted.
+Admitted.*)
 
 
-Lemma FLT_format_double: forall u, format u -> format (2*u).
+(* Lemma FLT_format_double: forall u, format u -> format (2*u).
 Proof with auto with typeclass_instances.
 intros u Fu.
 apply generic_format_FLT.
@@ -97,4 +132,4 @@ simpl;ring.
 easy.
 apply Z.le_trans with (1:=H3).
 apply Zle_succ.
-Qed.
+Qed. *)
