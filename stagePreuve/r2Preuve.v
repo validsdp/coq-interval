@@ -67,6 +67,9 @@ case Rle_bool_spec; intro Hu0.
   {
     case Rlt_bool_spec; intro Hcu1.
     {
+      assert (round_flt (u + R_Eta64) = (u + R_Eta64)%R) as Hsubnormal.
+      admit. (* u est un sous-normal *)
+      rewrite Hsubnormal.
       apply f_equal2; [reflexivity|].
       unfold ulp_flt.
       case Req_bool_spec; intro Huz; unfold R_Eta64.
@@ -103,58 +106,10 @@ case Rle_bool_spec; intro Hu0.
     lra.
   }
   unfold cexp.
-  apply f_equal2; [reflexivity|].
   admit. (* Preuve normale *)
 }
 admit. (* Preuve négative *)
 Admitted.
-
-
-(*Theorem Rump2009_2_3: forall u : PrimFloat.float,
-  (PrimFloat.is_finite u) = true -> (C_UP u) = (next_up u).
-Proof.
-intro u.
-intro uFinite.
-apply Prim2B_inj.
-rewrite next_up_equiv.
-rewrite is_finite_equiv in uFinite.
-assert (bu : u = B2Prim (Prim2B u)).
-  symmetry.
-  apply B2Prim_Prim2B.
-induction (Prim2B u).
-{
-  rewrite bu.
-  apply B2Prim_inj.
-  rewrite B2Prim_Prim2B.
-  induction s;compute;reflexivity.
-}
-easy.
-easy.
-{
-  rewrite bu;
-    apply B2Prim_inj;
-    rewrite B2Prim_Prim2B;
-    unfold C_UP.
-  set (c := (B2Prim (B754_finite s m e e0))).
-  
-  case_eq (c0 <= abs c).
-  intro ineq1.
-  admit.
-  case_eq (abs c < c1).
-  intros ineq2 ineq1.
-  admit.
-  intros ineq2 ineq1.
-  admit.
-
-  set (c := (B2Prim (B754_finite true m e e0))).
-  case_eq (c0 <= abs c).
-  admit.
-  case_eq (abs c < c1).
-  admit.
-  admit.
-}
-Admitted.*)
-
 
 (* Lemma FLT_format_double: forall u, format u -> format (2*u).
 Proof with auto with typeclass_instances.
