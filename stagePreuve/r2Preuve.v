@@ -33,7 +33,6 @@ let ac := abs c in
   else
     c + (Phi64 * ac).
 
-Variable emin : Z.
 Context { prec_gt_0_ : Prec_gt_0 prec }.
 
 Notation format := (generic_format radix2 (FLT_exp emin prec)).
@@ -48,14 +47,12 @@ Definition C_UP_R (c : R) :=
 let ac := Rabs c in
   if Rlt_bool ac R_c0 then
     if Rlt_bool ac R_c1 then
-      (c + R_Eta64)%R
+      round_flt (c + R_Eta64)%R (* Else if *)
     else
-      let C := (R_iEps64 * c)%R in 
-      (R_Eps64 * (C + (R_Phi64 * Rabs C)))%R
+      let C := round_flt (R_iEps64 * c)%R in 
+      round_flt (R_Eps64 * round_flt (C + round_flt (R_Phi64 * Rabs C)))%R (* Scaling *)
   else
-    (c + R_Phi64 * ac)%R.
-
-Eval compute in bpow radix2 (FLT_exp emin prec 1).
+    round_flt (c + round_flt (R_Phi64 * ac))%R. (* Normal *)
 
 Lemma C_UP_R_def: forall u, format u -> C_UP_R u = succ radix2 (FLT_exp emin prec) u.
 Proof with auto with typeclass_instances.
@@ -63,27 +60,53 @@ intros u form.
 apply FLT_format_generic in form...
 destruct form as [uf H1 H2 H3].
 unfold succ.
-destruct (Rle_bool 0 u) eqn:is_positive.
+case Rle_bool_spec; intro Hu0.
 {
-unfold C_UP_R.
-destruct (Rlt_bool (Rabs u) R_c0) eqn:ineq1.
-destruct (Rlt_bool (Rabs u) R_c1) eqn:ineq2.
-apply f_equal2. trivial.
-admit. (* Trivial *)
-unfold ulp_flt.
-destruct (Req_bool u 0) eqn:is_zero.
-destruct (negligible_exp) eqn:neg.
-admit. (* Preuve Scaling *)
-admit. (* Trivial : Contradiction *)
-unfold cexp.
-admit. (* Preuve else-if *)
-unfold ulp_flt.
-destruct (Req_bool u 0) eqn:is_zero.
-admit. (* Trivial : Contradiction *)
-unfold cexp.
-admit. (* Preuve normale *)
+  unfold C_UP_R.
+  case Rlt_bool_spec; intro Huc0.
+  {
+    case Rlt_bool_spec; intro Hcu1.
+    {
+      apply f_equal2; [reflexivity|].
+      unfold ulp_flt.
+      case Req_bool_spec; intro Huz; unfold R_Eta64.
+      {
+        admit. (* Trivial *) (* ça ne me semble pas totalement trivial ?,
+        il faut utiliser ineq2, negligible_exp_FLT et la def de fexp *)
+      }
+      apply f_equal2; [reflexivity|].
+      unfold cexp.
+      admit. (* Trivial (FAIT EN PAPIER) *) 
+    }
+    unfold ulp_flt.
+    case Req_bool_spec; intro Hu.
+    {
+      exfalso.
+      revert Hcu1.
+      apply Rlt_not_le.
+      rewrite Hu.
+      rewrite Rabs_R0.
+      compute.
+      lra.
+    }
+    admit. (* Preuve Scaling *)
+  }
+  unfold ulp_flt.
+  case Req_bool_spec; intro Hu.
+  {
+    exfalso.
+    revert Huc0.
+    apply Rlt_not_le.
+    rewrite Hu.
+    rewrite Rabs_R0.
+    compute.
+    lra.
+  }
+  unfold cexp.
+  apply f_equal2; [reflexivity|].
+  admit. (* Preuve normale *)
 }
-admit. (* Preuve pour négatif *)
+admit. (* Preuve négative *)
 Admitted.
 
 
