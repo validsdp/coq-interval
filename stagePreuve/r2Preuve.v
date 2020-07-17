@@ -44,28 +44,16 @@ Notation cexp := (cexp radix2 (FLT_exp emin prec)).
 Notation pred_flt := (pred radix2 (FLT_exp emin prec)).
 Notation succ_flt := (succ radix2 (FLT_exp emin prec)).
 Notation bpow_2 := (bpow radix2).
-Definition R_ufp (x: R) := ((R_iEps64 * (ulp radix2 (FLT_exp emin prec) x))/2)%R. (* Définition sensiblement erronnée, voir 
-  Handbook of Floating-Point Arithmetic, page 34 *)
+Definition R_ufp (x: R) := bpow_2 (mag radix2 x - 1).
 
-Lemma ulp_to_ufp: forall x, (ulp_flt x = 2 * R_Eps64 * R_ufp (x))%R.
+(* ((R_iEps64 * (ulp radix2 (FLT_exp emin prec) x))/2)%R. *)
+
+(* Lemma ulp_to_ufp: forall x, format x -> (Rabs x >= R_c1)%R -> (ulp_flt x = 2 * R_Eps64 * R_ufp (x))%R.
 Proof with auto with typeclass_instances.
-intros u.
-apply (Rmult_eq_reg_l (1/2)%R); [|lra].
-apply (Rmult_eq_reg_l R_iEps64).
-field_simplify.
-unfold R_ufp.
-unfold R_iEps64 at 2.
-unfold R_Eps64 at 1.
-rewrite <- bpow_plus.
-simpl.
-field_simplify.
-easy.
-unfold R_iEps64.
-pose proof (bpow_gt_0 radix2 53).
-lra.
-Qed.
+intros u form Hineq.
+Qed.*)
 
-Definition Prim2R (x : PrimFloat.float) := B2R (Prim2B x).
+(* Definition Prim2R (x : PrimFloat.float) := B2R (Prim2B x). *)
 
 Definition B_UP_R (c : R) :=
   round_flt (c + round_flt(round_flt (R_Phi64 * Rabs c) + R_Eta64)).
@@ -136,23 +124,29 @@ Lemma ufp_le_id: forall u, format u -> (u <> 0)%R ->
 Proof with auto with typeclass_instances.
 intros u form Hnot_zero.
 unfold R_ufp.
-unfold ulp.
-rewrite Req_bool_false...
-Admitted.
+apply bpow_mag_le...
+Qed.
 
 Lemma ufp2_gt_id: forall u, format u -> (u <> 0)%R ->
   (2 * R_ufp u > Rabs u)%R.
 Proof with auto with typeclass_instances.
-Admitted.
+intros u form Hnot_zero.
+unfold R_ufp.
+apply Rlt_gt.
+assert (2 = bpow_2 1)%R as bpow1_eq_2.
+{
+  compute; lra.
+}
+rewrite bpow1_eq_2.
+rewrite <- bpow_plus.
+rewrite Zplus_minus.
+apply bpow_mag_gt.
+Qed.
 
 Lemma ufp_gt_0: forall u, (u <> 0)%R -> (0 < R_ufp u)%R.
 Proof with auto with typeclass_instances.
 intros u Hnot_zero.
 unfold R_ufp.
-apply Rmult_lt_0_compat; [|lra].
-apply Rmult_lt_0_compat; [apply bpow_gt_0|].
-unfold ulp.
-rewrite Req_bool_false...
 apply bpow_gt_0.
 Qed.
 
@@ -175,18 +169,18 @@ destruct (Zmax_spec (mag radix2 u - 1 - prec) (-1074))%Z.
   apply Decidable.not_and_iff.
   intro Hu_big.
   contradict Hu_big.
-  assert ((mag radix2 u - 1 - prec <= -1074) -> ~ (mag radix2 u - 1 - prec >= -1074))%Z.
-  admit. (* Trivial *)
-  apply H.
-  apply Zplus_le_reg_r with prec.
-  apply Zplus_le_reg_r with 1%Z.
-  ring_simplify.
+  intro Hge.
+  apply Z.ge_le in Hge.
+  generalize Hge.
+  apply Z.lt_nge.
+  apply Zplus_lt_reg_r with prec.
+  apply Zplus_lt_reg_r with 1%Z.
   simpl.
-  now apply Z.le_trans with (-1021)%Z.
+  lia.
 }
 destruct H.
 now rewrite H0.
-Admitted.
+Qed.
 
 Lemma round_subnormal_plus_eta: forall u, format u -> (Rabs u < R_c1)%R -> (round_flt(u + R_Eta64) = u + R_Eta64)%R.
 Proof with auto with typeclass_instances.
@@ -225,7 +219,12 @@ case (Rle_dec (u + R_Eta64) 0); intros HAddPos.
     apply Rlt_le in HineqL.
     assert (-u + - bpow radix2 (-1074) <= bpow radix2 (-1021) + - bpow radix2 (-1074))%R by lra.
     apply Rle_trans with (bpow radix2 (-1021) + - bpow radix2 (-1074))%R...
-    compute; lra.
+    rewrite <- Rplus_0_r.
+    apply Rplus_le_compat_l.
+    apply Ropp_le_cancel.
+    rewrite Ropp_0.
+    rewrite Ropp_involutive.
+    apply bpow_ge_0.
   }
   apply Rnot_le_gt in Hpos.
   compute; lra.
@@ -465,7 +464,7 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r209.
   rewrite (round_generic radix2 (FLT_exp emin prec) ZnearestE (R_Eps64 * succ_flt u)%R) in r14.
   2:{
     admit. (* Puissance de 2 *)
-  }
+  } (* TODO : Inégalité round id *)
   apply Rlt_le_trans with (R_Eps64 * succ_flt u)%R...
   apply Rmult_lt_compat_l; [apply bpow_gt_0|].
   apply Rle_lt_trans with (Rabs u).
@@ -578,14 +577,13 @@ Proof with auto with typeclass_instances.
 intros u form Hnot_zero.
 unfold B_UP_R.
 unfold B_DN_R.
-enough (- u + round_flt (round_flt (R_Phi64 * Rabs (- u)) + R_Eta64) = -(u - round_flt (round_flt (R_Phi64 * Rabs u) + R_Eta64)))%R.
-2:{
-  rewrite Ropp_minus_distr.
-  rewrite Rabs_Ropp.
-  lra.
-}
-admit. (* Trivial *)
-Admitted.
+unfold round_flt.
+rewrite <- round_NE_opp.
+f_equal.
+rewrite Ropp_minus_distr.
+rewrite Rabs_Ropp.
+lra.
+Qed.
 
 Lemma B_DN_R_opp: forall u, format u -> (u <> 0)%R ->
   (B_DN_R (-u) = - B_UP_R (u))%R.
@@ -593,14 +591,13 @@ Proof with auto with typeclass_instances.
 intros u form Hnot_zero.
 unfold B_UP_R.
 unfold B_DN_R.
-enough (- u + round_flt (round_flt (R_Phi64 * Rabs (- u)) + R_Eta64) = -(u - round_flt (round_flt (R_Phi64 * Rabs u) + R_Eta64)))%R.
-2:{
-  rewrite Ropp_minus_distr.
-  rewrite Rabs_Ropp.
-  lra.
-}
-admit. (* Trivial *)
-Admitted.
+unfold round_flt.
+rewrite <- round_NE_opp.
+f_equal.
+rewrite Ropp_plus_distr.
+rewrite Rabs_Ropp.
+lra.
+Qed.
 
 Theorem R2_1_UP: forall u, format u -> (u <> 0)%R ->
   (succ_flt u <= B_UP_R u)%R.
@@ -674,7 +671,7 @@ destruct Hinterval as [Hsubnorm|Hnorm].
       rewrite Rmult_0_r.
       apply round_0...
     }
-    admit. (* Non trivial : Arrondi vers 0 *)
+    admit. (* Non trivial : Arrondi vers 0 : round_N_small *)
   }
   rewrite H.
   rewrite Rplus_0_l.
@@ -849,11 +846,6 @@ case (Rle_dec 0 u); intros Hpos.
     rewrite ulp_FLT_0...
     rewrite round_generic...
     apply generic_format_bpow...
-    simpl.
-    unfold FLT_exp.
-    simpl (-1073 - prec)%Z.
-    unfold emin.
-    simpl.
     easy.
   }
   apply R2_2_UP_pos...
@@ -907,7 +899,9 @@ rewrite pred_opp.
 rewrite B_DN_R_opp...
 apply Ropp_eq_compat.
 apply R2_2_UP_pos...
-admit. (* Trivial *)
+unfold u'.
+rewrite Rabs_Ropp...
+lra.
 Admitted.
 
 Lemma C_UP_R_1st_spec: forall u, format u -> (Rabs u >= R_c0)%R -> round_flt(u + round_flt(R_Phi64 * Rabs u)) = succ_flt u.
@@ -968,7 +962,10 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
         rewrite Req_bool_false.
         2:{
           rewrite Rabs_pos_eq in Hineq...
-          admit. (* Élémentaire *)
+          apply Rgt_not_eq.
+          apply Rlt_le_trans with (R_c0).
+          apply bpow_gt_0.
+          lra.
         }
         unfold cexp.
         unfold R_Eps64.
@@ -991,7 +988,10 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
           apply Rmult_le_compat_r.
           compute; lra.
           apply bpow_mag_le.
-          admit. (* Élémentaire *)
+          apply Rgt_not_eq.
+          apply Rge_gt_trans with (R_c0).
+          rewrite Rabs_pos_eq in Hineq...
+          apply bpow_gt_0.
         }
         lra.
       }
@@ -1031,7 +1031,7 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
         unfold R_c0 in Hineq.
         assert (bpow_2 (mag radix2 u - 1) <= Rabs u)%R as Hbpow_le_abs.
         apply bpow_mag_le.
-        admit. (* Trivial *)
+        lra.
         apply Rle_trans with (R_Eps64 * (Rabs u))%R.
         {
           apply Rmult_le_compat_l; [apply bpow_ge_0|]...
@@ -1045,18 +1045,14 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
       field_simplify.
       apply Rplus_le_compat_l.
       unfold ulp.
-      rewrite Req_bool_false...
-      2:{
-        admit. (* Trivial *)
-      }
+      rewrite Req_bool_false; [|lra]...
       unfold cexp.
       unfold FLT_exp.
       rewrite Z.max_l.
       2:{
         admit. (* Plus tard, élémentaire *)
       }
-      assert (mag radix2 u - 53 = ((mag radix2 u - 1) + (- 53 + 1)))%Z as prec_decomp.
-      omega.
+      assert (mag radix2 u - 53 = ((mag radix2 u - 1) + (- 53 + 1)))%Z as prec_decomp by lia.
       rewrite mag_opp.
       unfold prec.
       rewrite prec_decomp.
@@ -1065,13 +1061,14 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
       assert (bpow_2 1 = 2)%R as bpow1_eq_2...
       rewrite bpow1_eq_2.
       assert (bpow_2 (mag radix2 u - 1) <= Rabs u)%R as Hbpow_le_abs.
-      apply bpow_mag_le.
-      admit. (* Trivial *)
+      {
+        apply bpow_mag_le; lra.
+      }
       rewrite (Rmult_comm (2 * R_Eps64) (Rabs u)).
       rewrite (Rmult_comm (2) (R_Eps64)).
       apply Rmult_le_compat_r...
       unfold R_Eps64.
-      compute; lra.
+      apply Rmult_le_pos; [apply bpow_ge_0 | lra].
     }
     apply Rle_ge.
     apply Rle_trans with (R_Eps64 * (u + 2 * R_Eps64 * Rabs u))%R...
@@ -1090,7 +1087,12 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
   }
   apply Rlt_le_trans with (R_Eps64 * succ_flt u)%R...
   apply Rmult_lt_compat_l; [apply bpow_gt_0|].
-  apply Rle_lt_trans with u; [|apply succ_gt_id; admit].
+  apply Rle_lt_trans with u.
+  {
+    apply Rle_trans with (Rabs u).
+    apply ufp_le_id...
+
+  }
   admit. (* ufp <= u *)
 }
 apply (Rplus_lt_compat_l u) in r210.
@@ -1333,8 +1335,7 @@ case Rlt_bool_spec; intro Huc0.
       symmetry.
       now apply ulp_FLT_small.
     }
-    rewrite Ropp_involutive.
-    rewrite Ropp_involutive.
+    rewrite !Ropp_involutive.
     unfold pred_pos.
     case Req_bool_spec; intro Hbpow_u.
     {
@@ -1350,14 +1351,22 @@ case Rlt_bool_spec; intro Huc0.
   2:{
     unfold u'.
     assert (round_flt (R_iEps64 * u) = R_iEps64 * u)%R as norm.
-    admit. (* Trivial *)
+    {
+      apply round_generic...
+      unfold R_iEps64.
+      rewrite Rmult_comm.
+      apply mult_bpow_pos_exact_FLT.
+      apply generic_format_FLT...
+      constructor 1 with uf...
+      easy.
+    }
     rewrite norm.
     unfold R_c0.
     unfold R_iEps64.
     apply Rle_ge.
     unfold R_c1 in Hcu1.
     assert (( bpow radix2 (-53)%Z * bpow radix2 (-969)%Z <=  bpow radix2 (-53)%Z * bpow radix2 53%Z * Rabs u)%R ->(bpow radix2 (-969)%Z <= bpow radix2 53%Z * Rabs u)%R).
-    admit. (* Trivial *)
+    admit. (* fix that *)
     rewrite Rabs_mult.
     rewrite Rabs_pos_eq at 1.
     2:{
