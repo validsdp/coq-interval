@@ -16,8 +16,36 @@ case (Rlt_dec u R_c1); intro Hu_subnormal.
     rewrite Rabs_pos_eq...
     lra.
   }
+  rewrite <- round_subnormal_plus_eta...
+  2:{
+    rewrite Rabs_pos_eq...
+    lra.
+  }
+  apply round_le...
+  apply Rplus_le_compat_l.
+  unfold eps.
+  rewrite <- (round_generic radix2 (FLT_exp emin prec) ZnearestE (R_Eta64)) at 1...
+  2:{
+    apply generic_format_bpow...
+    simpl.
+    easy.
+  }
+  apply round_le...
+  apply Rplus_le_reg_r with (-R_Eta64)%R.
+  field_simplify.
+  rewrite <- (round_generic radix2 (FLT_exp emin prec) ZnearestE (0)) at 1...
+  2:{
+    apply generic_format_0.
+  }
+  apply round_le...
+  apply Rmult_le_pos...
+  {
+    unfold R_Phi64.
+    apply Rle_trans with R_Eps64; [apply bpow_ge_0|].
+    apply succ_ge_id.
+  }
+  apply Rabs_pos.
 }
-
 assert (R_Eps64 * (R_ufp u) < eps)%R as r209.
 {
   assert (round_flt(R_Eps64 * succ_flt u) <= round_flt (R_Phi64 * Rabs u))%R as r14.
