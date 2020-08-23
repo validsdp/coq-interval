@@ -9,6 +9,15 @@ Proof with auto with typeclass_instances.
 intros u form Hpos.
 unfold B_UP_R.
 set (eps := (round_flt (round_flt (R_Phi64 * Rabs u) + R_Eta64))%R).
+case (Rlt_dec u R_c1); intro Hu_subnormal. 
+{
+  rewrite succ_subnormal...
+  2:{
+    rewrite Rabs_pos_eq...
+    lra.
+  }
+}
+
 assert (R_Eps64 * (R_ufp u) < eps)%R as r209.
 {
   assert (round_flt(R_Eps64 * succ_flt u) <= round_flt (R_Phi64 * Rabs u))%R as r14.
