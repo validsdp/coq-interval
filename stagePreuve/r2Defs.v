@@ -17,7 +17,7 @@ Definition R_Phi64 := succ radix2 (FLT_exp emin prec) R_Eps64.
 
 Definition c0 := Eval compute in 0.5%float * 1/(Eps64 * Eps64) * Eta64.
 Definition R_c0 := bpow radix2 (-969)%Z.
-Definition c1 := Eval compute in (iEps64 * Eta64)%float. (* Plus petit normal *)
+Definition c1 := Eval compute in (iEps64 * Eta64)%float. (* Borne binade minimale *)
 Definition R_c1 := bpow radix2 (-1021)%Z.
 Definition clb := Eval compute in 0.5%float * c1.
 Definition R_clb := bpow radix2 (-1022)%Z.

@@ -102,19 +102,19 @@ destruct H.
 now rewrite H0.
 Qed.
 
-Lemma subnormal_mag: forall u, format u -> (0 < Rabs u < R_c1)%R ->
+Lemma small_mag: forall u, format u -> (0 < Rabs u < R_c1)%R ->
   (mag radix2 (Rabs u) <= (-1021))%Z.
 Proof with auto with typeclass_instances.
-intros u form Hsubnormal.
+intros u form Hsmall.
 apply mag_le_bpow; [lra|].
 fold R_c1.
 now rewrite Rabs_right; [|lra].
 Qed.
 
-Lemma subnormal_FLT: forall u, format u -> (0 < Rabs u < R_c1)%R ->
+Lemma small_FLT: forall u, format u -> (0 < Rabs u < R_c1)%R ->
   (FLT_exp emin prec (mag radix2 u) = (-1074))%Z.
 Proof with auto with typeclass_instances.
-intros u form Hsubnormal.
+intros u form Hsmall.
 rewrite <-mag_abs.
 unfold FLT_exp.
 unfold emin.
@@ -123,16 +123,16 @@ apply Z.max_r.
 unfold prec.
 apply Zplus_le_reg_r with 53%Z.
 ring_simplify.
-apply subnormal_mag...
+apply small_mag...
 Qed.
 
-Corollary subnormal_m1_FLT: forall u, format u -> (0 < Rabs u < R_c1)%R ->
+Corollary small_m1_FLT: forall u, format u -> (0 < Rabs u < R_c1)%R ->
   (FLT_exp emin prec (mag radix2 u - 1) = (-1074))%Z.
 Proof with auto with typeclass_instances.
-intros u form Hsubnormal.
-enough (FLT_exp emin prec (mag radix2 u - 1) = FLT_exp emin prec (mag radix2 u))%Z as FLT_subnormal.
-rewrite FLT_subnormal.
-apply subnormal_FLT...
+intros u form Hsmall.
+enough (FLT_exp emin prec (mag radix2 u - 1) = FLT_exp emin prec (mag radix2 u))%Z as FLT_small.
+rewrite FLT_small.
+apply small_FLT...
 unfold FLT_exp.
 rewrite !Z.max_r...
 {
@@ -142,7 +142,7 @@ rewrite !Z.max_r...
   ring_simplify.
   simpl.
   rewrite <-mag_abs.
-  apply subnormal_mag...
+  apply small_mag...
 }
 unfold emin.
 unfold prec.
@@ -151,23 +151,23 @@ ring_simplify.
 simpl.
 apply Z.le_trans with (-1021)%Z; [|lia].
 rewrite <- mag_abs.
-apply subnormal_mag...
+apply small_mag...
 Qed.
 
-Lemma succ_subnormal_pos: forall u, format u -> (u >= 0)%R -> (Rabs u < R_c1)%R ->
+Lemma succ_small_pos: forall u, format u -> (u >= 0)%R -> (Rabs u < R_c1)%R ->
   (succ_flt u = u + R_Eta64)%R.
 Proof with auto with typeclass_instances.
-intros u form Hpos Hsubnormal.
+intros u form Hpos Hsmall.
 unfold succ.
 rewrite Rle_bool_true; [|lra].
 now rewrite ulp_FLT_small.
 Qed.
 
 
-Lemma pred_subnormal_pos: forall u, format u -> (u >= 0)%R -> (Rabs u < R_c1)%R ->
+Lemma pred_small_pos: forall u, format u -> (u >= 0)%R -> (Rabs u < R_c1)%R ->
   (pred_flt u = u - R_Eta64)%R.
 Proof with auto with typeclass_instances.
-intros u form Hpos Hsubnormal.
+intros u form Hpos Hsmall.
 case (Req_dec 0 u); intros Hzero.
 {
   rewrite <- Hzero.
@@ -184,17 +184,17 @@ rewrite pred_eq_pos; [|lra].
 unfold pred_pos.
 case Req_bool_spec; intros Hu_bpow.
 {
-  rewrite subnormal_m1_FLT...
+  rewrite small_m1_FLT...
   split...
   apply Rabs_pos_lt...
 }
 now rewrite ulp_FLT_small.
 Qed.
 
-Lemma succ_subnormal_neg: forall u, format u -> (u < 0)%R -> (Rabs u < R_c1)%R ->
+Lemma succ_small_neg: forall u, format u -> (u < 0)%R -> (Rabs u < R_c1)%R ->
   (succ_flt u = u + R_Eta64)%R.
 Proof with auto with typeclass_instances.
-intros u form Hneg Hsubnormal.
+intros u form Hneg Hsmall.
 rewrite <- (Ropp_involutive u).
 set (u' := (-u)%R).
 assert (u' > 0)%R as Hup_pos.
@@ -208,7 +208,7 @@ assert (format u') as Hform_up.
   apply generic_format_opp...
 }
 rewrite succ_opp.
-rewrite pred_subnormal_pos...
+rewrite pred_small_pos...
 2:{
   lra.
 }
@@ -219,10 +219,10 @@ rewrite pred_subnormal_pos...
 now lra.
 Qed.
 
-Lemma pred_subnormal_neg: forall u, format u -> (u < 0)%R -> (Rabs u < R_c1)%R ->
+Lemma pred_small_neg: forall u, format u -> (u < 0)%R -> (Rabs u < R_c1)%R ->
 (pred_flt u = u - R_Eta64)%R.
 Proof with auto with typeclass_instances.
-intros u form Hneg Hsubnormal.
+intros u form Hneg Hsmall.
 rewrite <- (Ropp_involutive u).
 set (u' := (-u)%R).
 assert (u' > 0)%R as Hup_pos.
@@ -236,7 +236,7 @@ assert (format u') as Hform_up.
   apply generic_format_opp...
 }
 rewrite pred_opp.
-rewrite succ_subnormal_pos...
+rewrite succ_small_pos...
 2:{
   lra.
 }
@@ -247,31 +247,31 @@ rewrite succ_subnormal_pos...
 now lra.
 Qed.
 
-Lemma succ_subnormal: forall u, format u -> (Rabs u < R_c1)%R ->
+Lemma succ_small: forall u, format u -> (Rabs u < R_c1)%R ->
   (succ_flt u = u + R_Eta64)%R.
 Proof with auto with typeclass_instances.
-intros u form Hsubnormal.
+intros u form Hsmall.
 case (Rle_lt_dec 0 u); intros Hsign.
 {
-  apply succ_subnormal_pos...
+  apply succ_small_pos...
   lra.
 }
-apply succ_subnormal_neg...
+apply succ_small_neg...
 Qed.
 
-Lemma pred_subnormal: forall u, format u -> (Rabs u < R_c1)%R ->
+Lemma pred_small: forall u, format u -> (Rabs u < R_c1)%R ->
 (pred_flt u = u - R_Eta64)%R.
 Proof with auto with typeclass_instances.
-intros u form Hsubnormal.
+intros u form Hsmall.
 case (Rle_lt_dec 0 u); intros Hsign.
 {
-  apply pred_subnormal_pos...
+  apply pred_small_pos...
   lra.
 }
-apply pred_subnormal_neg...
+apply pred_small_neg...
 Qed.
 
-Lemma round_subnormal_plus_eta: forall u, format u -> (Rabs u < R_c1)%R -> (round_flt(u + R_Eta64) = u + R_Eta64)%R.
+Lemma round_small_plus_eta: forall u, format u -> (Rabs u < R_c1)%R -> (round_flt(u + R_Eta64) = u + R_Eta64)%R.
 Proof with auto with typeclass_instances.
 intros u form Hineq.
 apply FLT_format_generic in form...
