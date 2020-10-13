@@ -11,20 +11,31 @@ Existing Instance Hmax.
 Local Open Scope float_scope.
 
 Definition Eps64 := Eval compute in ldexp 1 (-53)%Z.
+(* Eps64 = u in paper *)
 Definition R_Eps64 := bpow radix2 (-53)%Z.
+
 Definition iEps64 := Eval compute in ldexp 1 (53)%Z.
+(* iEps64 = u^-1 in paper *)
 Definition R_iEps64 := bpow radix2 53%Z.
+
 Definition Eta64 := Eval compute in ldexp 1 (-1074)%Z.
+(* Eta64 = eta in paper *)
 Definition R_Eta64 := bpow radix2 (-1074)%Z.
+
 Definition Phi64 := Eval compute in (Eps64 * (1 + (2 * Eps64)))%float.
+(* R_Phi64 = succ(u) in paper *)
 Definition R_Phi64 := succ radix2 (FLT_exp emin prec) R_Eps64.
 
 Definition c0 := Eval compute in 0.5%float * 1/(Eps64 * Eps64) * Eta64.
+(* R_c0 = 1/2 u^-2 eta in paper *)
 Definition R_c0 := bpow radix2 (-969)%Z.
+
 Definition c1 := Eval compute in (iEps64 * Eta64)%float. (* Borne binade minimale *)
 Definition R_c1 := bpow radix2 (-1021)%Z.
+
 Definition clb := Eval compute in 0.5%float * c1.
 Definition R_clb := bpow radix2 (-1022)%Z.
+
 Definition crb := Eval compute in 2%float * c1.
 Definition R_crb := bpow radix2 (-1020)%Z.
 
@@ -47,6 +58,14 @@ Definition B_DN_R (c : R) :=
 
 (* algorithm 2 in paper *)
 Definition C_UP_R (c : R) :=
+(* ac = |c| in paper *)
+(* R_c0 = 1/2 u^-2 eta in paper *)
+(* Eps64 = u in paper *)
+(* Eta64 = eta in paper *)
+(* R_c1 = u^-1 eta in paper *)
+(* iEps64 = u^-1 in paper *)
+(* R_Phi64 = succ(u) in paper *)
+(* round_flt = fl(.) in paper *)
 let ac := Rabs c in
   if Rlt_bool ac R_c0 then
     if Rlt_bool ac R_c1 then
