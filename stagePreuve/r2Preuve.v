@@ -92,6 +92,7 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r209.
       apply ufp_le_id...
       apply Rgt_not_eq...
     }
+    (* format u -> u > 0 -> u >= R_c1 -> R_c1 <= R_ufp u * R_Phi64 -> format (R_Phi64 * R_ufp u) *)
     admit. (* Pas si trivial: Phi64 est en exposant négatif, ufp est un exposant valide, donc on est dans le format *)
   }
   apply Rnot_le_gt in Hufp_phi_normal.
@@ -113,6 +114,7 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r209.
     apply Rge_trans with (round_flt (R_Phi64 * R_ufp u))%R; [apply r210|].
     rewrite <- (round_generic radix2 (FLT_exp emin prec) ZnearestE (R_Eps64 * R_ufp u))...
     2:{
+      (* format u -> u > 0 -> u >= R_c1 -> R_c1 > R_ufp u * R_Phi64 -> format (R_Eps64 * R_ufp u) *)
       admit. (* Pas si trivial *)
     }
     fold round_flt.
@@ -188,6 +190,8 @@ unfold R_ufp.
   apply Rplus_le_compat_l.
   rewrite <- Rmult_1_r at 1.
   rewrite Rmult_assoc.
+  (* format u -> u > 0 -> u >= R_c1 -> R_c1 > R_ufp u * R_Phi64 -> format (R_Eps64 * R_ufp u) *)
+Admitted. (*
   apply Rmult_le_compat_l.
   apply ulp_ge_0.
   unfold R_Eps64.
@@ -197,7 +201,7 @@ unfold R_ufp.
   lra.
 }
 now apply Rplus_lt_compat_l.
-Admitted.
+Admitted. *)
 
 (* TODO : voir si on ne peut pas l'avoir à partir du précédent avec les opposés *)
 Theorem R2_1_DN_pos: forall u, format u -> (u > 0)%R ->
@@ -226,8 +230,10 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r209.
     2:{
       lra.
     }
+    (* format u -> u > 0 -> u >= R_c1 -> R_c1 > R_ufp u * R_Phi64 -> format (R_Eps64 * R_ufp u) *)
+    admit. (*
     apply bpow_cexp_u_le_eps_m_u...
-    lra.
+    lra. *)
   }
   unfold eps.
   apply Rlt_le_trans with (round_flt (R_Phi64 * Rabs u))%R.
@@ -245,6 +251,8 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r209.
   unfold round_flt in r14 at 1.
   rewrite (round_generic radix2 (FLT_exp emin prec) ZnearestE (R_Eps64 * succ_flt u)%R) in r14.
   2:{
+    (* format u -> u > 0 -> round radix2 (FLT_exp emin prec) ZnearestE (R_Eps64 * succ_flt u) <=
+         round_flt (R_Phi64 * Rabs u -> format (R_Eps64 * succ_flt u) *)
     admit. (* Puissance de 2 *)
   }
   apply Rlt_le_trans with (R_Eps64 * succ_flt u)%R...
@@ -266,6 +274,7 @@ apply Ropp_lt_contravar in r209.
 apply (Rplus_lt_compat_l u) in r209.
 apply Rlt_le_trans with (u - R_Eps64 * R_ufp u )%R; [assumption|].
 rewrite pred_eq_pos; [|lra]...
+(*   (u - R_Eps64 * R_ufp u <= (pred_pos radix2 (FLT_exp emin prec) u + u) / 2)%R  *)
 unfold pred_pos.
 admit.
 Admitted.
@@ -346,6 +355,7 @@ destruct Hinterval as [Hsubnorm|Hnorm].
       rewrite Rmult_0_r.
       apply round_0...
     }
+    (* format u -> u > 0 -> u < R_clb -> round_flt (R_phi64 * u) = 0 *)
     admit. (* Non trivial : Arrondi vers 0 : round_N_small *)
   }
   rewrite H.
@@ -389,14 +399,17 @@ assert (eps <= (5*R_Eps64*R_ufp(u))/2)%R as r214.
     assert (u <= pred_flt(2*R_ufp(u)))%R as rbeq215.
     {
       apply pred_ge_gt...
+      (* ... -> u > R_crb -> format (2 * R_ufp u) *)
       admit. (* Format de ufp *)
       rewrite <- (Rabs_pos_eq u) at 1.
       apply ufp2_gt_id...
       lra.
       lra.
     }
+    (* (u <= 2 * (1 - R_Eps64) * R_ufp u)%R *)
     admit.
   }
+  (* (eps <= 5 * R_Eps64 * R_ufp u / 2)%R *)
   admit. (* Non trivial *)
 }
 apply round_N_le_midp...
@@ -414,6 +427,7 @@ assert (succ_flt u + R_Eps64 * R_ufp u <= (succ_flt u + succ_flt (succ_flt u))/2
   apply (Rplus_le_reg_r (-u')).
   field_simplify.
   unfold R_ufp.
+  (* (R_Eps64 * bpow_2 (mag radix2 u - 1) <= ulp_flt u' / 2)%R *)
   admit. (* Trivial *)
 }
 apply Rle_lt_trans with (succ_flt u + (R_Eps64 * R_ufp u)/2)%R.
@@ -421,8 +435,10 @@ apply Rle_lt_trans with (succ_flt u + (R_Eps64 * R_ufp u)/2)%R.
   rewrite succ_eq_pos; [|lra].
   rewrite Rplus_assoc.
   apply Rplus_le_compat_l.
+  (* (eps <= ulp_flt u + R_Eps64 * R_ufp u / 2)%R *)
+  admit. (*
   rewrite ulp_to_ufp.
-  now field_simplify.
+  now field_simplify. *)
 }
 apply Rlt_le_trans with (succ_flt u + R_Eps64 * R_ufp u)%R...
 {
@@ -454,6 +470,7 @@ destruct Hinterval as [Hsubnorm|Hnorm].
     simpl; easy.
   }
   rewrite etaForm.
+Admitted. (*
   rewrite round_small_minus_eta...
   {
     rewrite pred_eq_pos.
@@ -495,7 +512,7 @@ assert (eps <= (5*R_Eps64*R_ufp(u))/2)%R as r214.
 }
 apply round_N_ge_midp...
 apply generic_format_pred...
-Admitted.
+Admitted. *)
 
 (* Theorem 2.2 for where u is c in the paper *)
 Theorem R2_2_UP: forall u, format u -> (Rabs u < R_clb \/ Rabs u > R_crb)%R ->
@@ -650,6 +667,7 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
         unfold FLT_exp.
         rewrite Z.max_l.
         2:{
+          (* format u -> u >= R_c0 -> emi <= mag radix2 u - prec *)
           admit. (* Non difficile *)
         }
         unfold prec.
@@ -727,6 +745,7 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
       unfold FLT_exp.
       rewrite Z.max_l.
       2:{
+        (* (emin <= mag radix2 (- u) - prec)%Z *)
         admit. (* Plus tard, élémentaire *)
       }
       assert (mag radix2 u - 53 = ((mag radix2 u - 1) + (- 53 + 1)))%Z as prec_decomp by lia.
@@ -760,6 +779,7 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
   unfold round_flt in r14 at 1.
   rewrite (round_generic radix2 (FLT_exp emin prec) ZnearestE (R_Eps64 * succ_flt u)%R) in r14.
   2:{
+    (* format u -> Rabs u >= R_c0 -> format (R_Eps64 * succ_flt u) *)
     admit. (* Puissance de 2 *)
   }
   apply Rlt_le_trans with (R_Eps64 * succ_flt u)%R...
@@ -768,8 +788,12 @@ assert (R_Eps64 * (R_ufp u) < eps)%R as r210.
   {
     apply Rle_trans with (Rabs u).
     apply ufp_le_id...
-
+    (* u <> 0 *)
+    admit.
+    (* Rabs u <= u ? (u >= 0 ?) *)
+    admit.
   }
+  (* u < succ_flt u *)
   admit. (* ufp <= u *)
 }
 apply (Rplus_lt_compat_l u) in r210.
@@ -783,19 +807,23 @@ case (Rle_dec 0 u); intros Hpos.
   apply Rplus_le_compat_l.
   rewrite <- Rmult_1_r at 1.
   rewrite Rmult_assoc.
+  (* ((succ_flt u + u) / 2 < u + eps)%R *)
+  admit. (*
   apply Rmult_le_compat_l.
   apply ulp_ge_0.
   unfold R_Eps64.
   unfold R_iEps64.
   rewrite <- bpow_plus.
   simpl.
-  lra.
+  lra. *)
 }
 apply Rnot_le_gt in Hpos.
 apply (@Rmult_le_reg_r 2 _ _ Rlt_R0_R2).
 field_simplify.
 unfold R_Eps64.
 unfold R_iEps64.
+(* ((succ_flt u + u) / 2 <= u + R_Eps64 * bpow_2 (mag radix2 u - 1))%R *)
+Admitted. (*
 rewrite <- bpow_plus.
 simpl.
 rewrite Rmult_1_l.
@@ -820,7 +848,7 @@ rewrite Req_bool_false.
   omega.
 }
 lra.
-Admitted.
+Admitted. *)
 
 (* Theorem 2.3 for where u is c in the paper *)
 Theorem C_UP_R_spec: forall u, format u -> C_UP_R u = succ_flt u.
@@ -865,6 +893,7 @@ case Rlt_bool_spec; intro Huc0.
     assert (round_flt (R_iEps64 * u) = R_iEps64 * u)%R as norm.
     {
       apply round_generic...
+      (* format (R_iEps64 * u) *)
       admit. (* Élémentaire : R_iEps64 est une puissance de 2 *)
     }
     rewrite norm.
@@ -888,6 +917,7 @@ case Rlt_bool_spec; intro Huc0.
     now apply bpow_le.
     assumption.
   }
+  (* round_flt (R_Eps64 * succ_flt (round_flt u')) = succ_flt u *)
   admit. (* Preuve Scaling, relativement trivial *)
 }
 apply C_UP_R_1st_spec.
