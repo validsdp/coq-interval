@@ -1,8 +1,11 @@
 Require Import Reals Psatz Floats.
 Add LoadPath "./interval/stagePreuve".
 Require Import r2Defs r2Generic.
-From Flocq Require Import Core Plus_error Mult_error IEEE754.PrimFloat BinarySingleNaN Relative.
+From Flocq Require Import Core Plus_error Mult_error IEEE754.PrimFloat BinarySingleNaN Relative
+.
 
+(* Theorem 2.1 for where u is c in the paper, only for u > 0 *)
+(* TODO : regarder les admits *)
 Theorem R2_1_UP_pos: forall u, format u -> (u > 0)%R ->
   (succ_flt u <= B_UP_R u)%R.
 Proof with auto with typeclass_instances.
@@ -196,6 +199,7 @@ unfold R_ufp.
 now apply Rplus_lt_compat_l.
 Admitted.
 
+(* TODO : voir si on ne peut pas l'avoir à partir du précédent avec les opposés *)
 Theorem R2_1_DN_pos: forall u, format u -> (u > 0)%R ->
   (B_DN_R u <= pred_flt u)%R.
 Proof with auto with typeclass_instances.
@@ -266,6 +270,7 @@ unfold pred_pos.
 admit.
 Admitted.
 
+(* Theorem 2.1 for where u is c in the paper, only for u <> 0 *)
 Theorem R2_1_UP: forall u, format u -> (u <> 0)%R ->
   (succ_flt u <= B_UP_R u)%R.
 Proof with auto with typeclass_instances.
@@ -294,6 +299,7 @@ apply R2_1_DN_pos...
 lra.
 Qed.
 
+(* Theorem 2.1 for where u is c in the paper, only for u <> 0 *)
 Theorem R2_1_DN: forall u, format u -> (u <> 0)%R ->
   (B_DN_R u <= pred_flt u)%R.
 Proof with auto with typeclass_instances.
@@ -322,6 +328,8 @@ apply R2_1_UP_pos...
 lra.
 Qed.
 
+(* Theorem 2.2 for where u is c in the paper, only for u > 0 *)
+(* TODO : regarder les admits *)
 Theorem R2_2_UP_pos: forall u, format u -> (u > 0)%R -> (Rabs u < R_clb \/ Rabs u > R_crb)%R ->
   B_UP_R u = succ radix2 (FLT_exp emin prec) u.
 Proof with auto with typeclass_instances.
@@ -489,6 +497,7 @@ apply round_N_ge_midp...
 apply generic_format_pred...
 Admitted.
 
+(* Theorem 2.2 for where u is c in the paper *)
 Theorem R2_2_UP: forall u, format u -> (Rabs u < R_clb \/ Rabs u > R_crb)%R ->
   B_UP_R u = succ radix2 (FLT_exp emin prec) u.
 Proof with auto with typeclass_instances.
@@ -571,6 +580,7 @@ rewrite Rabs_Ropp...
 lra.
 Admitted.
 
+(* Theorem 2.3 for where u is c in the paper, première branche *)
 Lemma C_UP_R_1st_spec: forall u, format u -> (Rabs u >= R_c0)%R -> round_flt(u + round_flt(R_Phi64 * Rabs u)) = succ_flt u.
 Proof with auto with typeclass_instances.
 intros u form Hineq.
@@ -812,6 +822,7 @@ rewrite Req_bool_false.
 lra.
 Admitted.
 
+(* Theorem 2.3 for where u is c in the paper *)
 Theorem C_UP_R_spec: forall u, format u -> C_UP_R u = succ_flt u.
 Proof with auto with typeclass_instances.
 intros u form.
@@ -884,6 +895,7 @@ apply generic_format_FLT...
 now apply Rle_ge.
 Admitted.
 
+(* Theorem 2.3 for where u is c in the paper, première branche *)
 Lemma C_DN_R_1st_spec: forall u, format u -> (Rabs u >= R_c0)%R -> round_flt(u - round_flt(R_Phi64 * Rabs u)) = pred_flt u.
 Proof with auto with typeclass_instances.
 intros u form Hineq.
@@ -973,6 +985,7 @@ apply Rlt_le_trans with (u - R_Eps64 * R_ufp u )%R; [assumption|].
 admit.
 Admitted.
 
+(* Theorem 2.3 for where u is c in the paper *)
 Theorem C_DN_R_spec: forall u, format u -> C_DN_R u = pred_flt u.
 Proof with auto with typeclass_instances.
 intros u form.

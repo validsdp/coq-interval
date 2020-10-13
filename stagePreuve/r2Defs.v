@@ -1,3 +1,7 @@
+(* ref papier Rump, Zimmerman, Boldo, Melquiond
+   Computing predecessor and successor in roundingto nearest
+   https://doi.org/10.1007/s10543-009-0218-z *)
+
 Require Import Reals Psatz Floats.
 From Flocq Require Import Core Plus_error Mult_error IEEE754.PrimFloat BinarySingleNaN Relative.
 
@@ -35,11 +39,13 @@ Notation succ_flt := (succ radix2 (FLT_exp emin prec)).
 Notation bpow_2 := (bpow radix2).
 Definition R_ufp (x: R) := bpow_2 (mag radix2 x - 1).
 
+(* algorithm 1 in paper *)
 Definition B_UP_R (c : R) :=
   round_flt (c + round_flt(round_flt (R_Phi64 * Rabs c) + R_Eta64)).
 Definition B_DN_R (c : R) :=
   round_flt (c - round_flt(round_flt (R_Phi64 * Rabs c) + R_Eta64)).
 
+(* algorithm 2 in paper *)
 Definition C_UP_R (c : R) :=
 let ac := Rabs c in
   if Rlt_bool ac R_c0 then
