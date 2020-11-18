@@ -2,23 +2,23 @@ Require Import Reals Psatz Floats.
 Require Import r2Defs.
 From Flocq Require Import Core Plus_error Mult_error IEEE754.PrimFloat BinarySingleNaN Relative.
 
-Lemma phi_eps: (R_Phi64 = R_Eps64 * (1 + 2 * R_Eps64))%R.
+Lemma phi_eps: (R_succ_u = R_u * (1 + 2 * R_u))%R.
 Proof with auto with typeclass_instances.
-unfold R_Phi64.
+unfold R_succ_u.
 unfold succ.
 rewrite Rle_bool_true...
 2:{
-  unfold R_Eps64.
+  unfold R_u.
   now apply bpow_ge_0.
 }
 unfold ulp.
 rewrite Req_bool_false...
 2:{
-  unfold R_Eps64.
+  unfold R_u.
   compute; lra.
 }
 unfold cexp.
-unfold R_Eps64.
+unfold R_u.
 rewrite mag_bpow; simpl (-53 + 1)%Z.
 unfold FLT_exp.
 unfold emin.
@@ -39,16 +39,16 @@ rewrite H0.
 now field_simplify.
 Qed.
 
-Lemma ufp_le_id: forall u, format u -> (u <> 0)%R ->
-  (R_ufp u <= Rabs u)%R.
+Lemma ufp_le_id: forall c, format c -> (c <> 0)%R ->
+  (R_ufp c <= Rabs c)%R.
 Proof with auto with typeclass_instances.
 intros u form Hnot_zero.
 unfold R_ufp.
 apply bpow_mag_le...
 Qed.
 
-Lemma ufp2_gt_id: forall u, format u -> (u <> 0)%R ->
-  (2 * R_ufp u > Rabs u)%R.
+Lemma ufp2_gt_id: forall c, format c -> (c <> 0)%R ->
+  (2 * R_ufp c > Rabs c)%R.
 Proof with auto with typeclass_instances.
 intros u form Hnot_zero.
 unfold R_ufp.
@@ -63,18 +63,18 @@ rewrite Zplus_minus.
 apply bpow_mag_gt.
 Qed.
 
-Lemma ufp_gt_0: forall u, (u <> 0)%R -> (0 < R_ufp u)%R.
+Lemma ufp_gt_0: forall c, (c <> 0)%R -> (0 < R_ufp c)%R.
 Proof with auto with typeclass_instances.
-intros u Hnot_zero.
+intros c Hnot_zero.
 unfold R_ufp.
 apply bpow_gt_0.
 Qed.
 
-Lemma flt_mag_small: forall u, (u <> 0)%R -> (Rabs u < R_c1)%R ->
-  FLT_exp emin prec (mag radix2 u - 1) = emin.
+Lemma flt_mag_small: forall c, (c <> 0)%R -> (Rabs c < R_c1)%R ->
+  FLT_exp emin prec (mag radix2 c - 1) = emin.
 Proof with auto with typeclass_instances.
-intros u Hnzero Hineq.
-assert (mag radix2 u <= (-1021))%Z as Hu_small.
+intros c Hnzero Hineq.
+assert (mag radix2 c <= (-1021))%Z as Hu_small.
 {
   unfold R_c1 in Hineq.
   apply mag_le_bpow...
@@ -82,7 +82,7 @@ assert (mag radix2 u <= (-1021))%Z as Hu_small.
 unfold emin.
 simpl (3-emax-prec)%Z.
 unfold FLT_exp.
-destruct (Zmax_spec (mag radix2 u - 1 - prec) (-1074))%Z.
+destruct (Zmax_spec (mag radix2 c - 1 - prec) (-1074))%Z.
 {
   exfalso.
   revert H.
@@ -102,19 +102,19 @@ destruct H.
 now rewrite H0.
 Qed.
 
-Lemma small_mag: forall u, format u -> (0 < Rabs u < R_c1)%R ->
-  (mag radix2 (Rabs u) <= (-1021))%Z.
+Lemma small_mag: forall c, format c -> (0 < Rabs c < R_c1)%R ->
+  (mag radix2 (Rabs c) <= (-1021))%Z.
 Proof with auto with typeclass_instances.
-intros u form Hsmall.
+intros c form Hsmall.
 apply mag_le_bpow; [lra|].
 fold R_c1.
 now rewrite Rabs_right; [|lra].
 Qed.
 
-Lemma small_FLT: forall u, format u -> (0 < Rabs u < R_c1)%R ->
-  (FLT_exp emin prec (mag radix2 u) = (-1074))%Z.
+Lemma small_FLT: forall c, format c -> (0 < Rabs c < R_c1)%R ->
+  (FLT_exp emin prec (mag radix2 c) = (-1074))%Z.
 Proof with auto with typeclass_instances.
-intros u form Hsmall.
+intros c form Hsmall.
 rewrite <-mag_abs.
 unfold FLT_exp.
 unfold emin.
@@ -126,11 +126,11 @@ ring_simplify.
 apply small_mag...
 Qed.
 
-Corollary small_m1_FLT: forall u, format u -> (0 < Rabs u < R_c1)%R ->
-  (FLT_exp emin prec (mag radix2 u - 1) = (-1074))%Z.
+Corollary small_m1_FLT: forall c, format c -> (0 < Rabs c < R_c1)%R ->
+  (FLT_exp emin prec (mag radix2 c - 1) = (-1074))%Z.
 Proof with auto with typeclass_instances.
-intros u form Hsmall.
-enough (FLT_exp emin prec (mag radix2 u - 1) = FLT_exp emin prec (mag radix2 u))%Z as FLT_small.
+intros c form Hsmall.
+enough (FLT_exp emin prec (mag radix2 c - 1) = FLT_exp emin prec (mag radix2 c))%Z as FLT_small.
 rewrite FLT_small.
 apply small_FLT...
 unfold FLT_exp.
@@ -154,8 +154,8 @@ rewrite <- mag_abs.
 apply small_mag...
 Qed.
 
-Lemma succ_small_pos: forall u, format u -> (u >= 0)%R -> (Rabs u < R_c1)%R ->
-  (succ_flt u = u + R_Eta64)%R.
+Lemma succ_small_pos: forall c, format c -> (c >= 0)%R -> (Rabs c < R_c1)%R ->
+  (succ_flt c = c + R_eta)%R.
 Proof with auto with typeclass_instances.
 intros u form Hpos Hsmall.
 unfold succ.
@@ -164,11 +164,11 @@ now rewrite ulp_FLT_small.
 Qed.
 
 
-Lemma pred_small_pos: forall u, format u -> (u >= 0)%R -> (Rabs u < R_c1)%R ->
-  (pred_flt u = u - R_Eta64)%R.
+Lemma pred_small_pos: forall c, format c -> (c >= 0)%R -> (Rabs c < R_c1)%R ->
+  (pred_flt c = c - R_eta)%R.
 Proof with auto with typeclass_instances.
-intros u form Hpos Hsmall.
-case (Req_dec 0 u); intros Hzero.
+intros c form Hpos Hsmall.
+case (Req_dec 0 c); intros Hzero.
 {
   rewrite <- Hzero.
   rewrite pred_0.
@@ -178,7 +178,7 @@ case (Req_dec 0 u); intros Hzero.
   unfold emax.
   unfold prec.
   simpl (3 - 1024 - 53)%Z.
-  now unfold R_Eta64.
+  now unfold R_eta.
 }
 rewrite pred_eq_pos; [|lra].
 unfold pred_pos.
@@ -191,20 +191,20 @@ case Req_bool_spec; intros Hu_bpow.
 now rewrite ulp_FLT_small.
 Qed.
 
-Lemma succ_small_neg: forall u, format u -> (u < 0)%R -> (Rabs u < R_c1)%R ->
-  (succ_flt u = u + R_Eta64)%R.
+Lemma succ_small_neg: forall c, format c -> (c < 0)%R -> (Rabs c < R_c1)%R ->
+  (succ_flt c = c + R_eta)%R.
 Proof with auto with typeclass_instances.
-intros u form Hneg Hsmall.
-rewrite <- (Ropp_involutive u).
-set (u' := (-u)%R).
-assert (u' > 0)%R as Hup_pos.
+intros c form Hneg Hsmall.
+rewrite <- (Ropp_involutive c).
+set (c' := (-c)%R).
+assert (c' > 0)%R as Hup_pos.
 {
-  unfold u'.
+  unfold c'.
   lra.
 }
-assert (format u') as Hform_up.
+assert (format c') as Hform_up.
 {
-  unfold u'.
+  unfold c'.
   apply generic_format_opp...
 }
 rewrite succ_opp.
@@ -213,26 +213,26 @@ rewrite pred_small_pos...
   lra.
 }
 2:{
-  unfold u'.
+  unfold c'.
   now rewrite Rabs_Ropp.
 }
 now lra.
 Qed.
 
-Lemma pred_small_neg: forall u, format u -> (u < 0)%R -> (Rabs u < R_c1)%R ->
-(pred_flt u = u - R_Eta64)%R.
+Lemma pred_small_neg: forall c, format c -> (c < 0)%R -> (Rabs c < R_c1)%R ->
+(pred_flt c = c - R_eta)%R.
 Proof with auto with typeclass_instances.
-intros u form Hneg Hsmall.
-rewrite <- (Ropp_involutive u).
-set (u' := (-u)%R).
-assert (u' > 0)%R as Hup_pos.
+intros c form Hneg Hsmall.
+rewrite <- (Ropp_involutive c).
+set (c' := (-c)%R).
+assert (c' > 0)%R as Hup_pos.
 {
-  unfold u'.
+  unfold c'.
   lra.
 }
-assert (format u') as Hform_up.
+assert (format c') as Hform_up.
 {
-  unfold u'.
+  unfold c'.
   apply generic_format_opp...
 }
 rewrite pred_opp.
@@ -241,17 +241,17 @@ rewrite succ_small_pos...
   lra.
 }
 2:{
-  unfold u'.
+  unfold c'.
   now rewrite Rabs_Ropp.
 }
 now lra.
 Qed.
 
-Lemma succ_small: forall u, format u -> (Rabs u < R_c1)%R ->
-  (succ_flt u = u + R_Eta64)%R.
+Lemma succ_small: forall c, format c -> (Rabs c < R_c1)%R ->
+  (succ_flt c = c + R_eta)%R.
 Proof with auto with typeclass_instances.
-intros u form Hsmall.
-case (Rle_lt_dec 0 u); intros Hsign.
+intros c form Hsmall.
+case (Rle_lt_dec 0 c); intros Hsign.
 {
   apply succ_small_pos...
   lra.
@@ -259,11 +259,11 @@ case (Rle_lt_dec 0 u); intros Hsign.
 apply succ_small_neg...
 Qed.
 
-Lemma pred_small: forall u, format u -> (Rabs u < R_c1)%R ->
-(pred_flt u = u - R_Eta64)%R.
+Lemma pred_small: forall c, format c -> (Rabs c < R_c1)%R ->
+(pred_flt c = c - R_eta)%R.
 Proof with auto with typeclass_instances.
-intros u form Hsmall.
-case (Rle_lt_dec 0 u); intros Hsign.
+intros c form Hsmall.
+case (Rle_lt_dec 0 c); intros Hsign.
 {
   apply pred_small_pos...
   lra.
@@ -271,9 +271,9 @@ case (Rle_lt_dec 0 u); intros Hsign.
 apply pred_small_neg...
 Qed.
 
-Lemma round_small_plus_eta: forall u, format u -> (Rabs u < R_c1)%R -> (round_flt(u + R_Eta64) = u + R_Eta64)%R.
+Lemma round_small_plus_eta: forall c, format c -> (Rabs c < R_c1)%R -> (round_flt(c + R_eta) = c + R_eta)%R.
 Proof with auto with typeclass_instances.
-intros u form Hineq.
+intros c form Hineq.
 apply FLT_format_generic in form...
 destruct form as [uf H1 H2 H3] eqn:H'.
 apply round_generic...
@@ -285,28 +285,28 @@ apply FLT_format_plus_small...
 }
 {
   apply generic_format_FLT.
-  unfold R_Eta64.
+  unfold R_eta.
   apply FLT_format_bpow...
   easy.
 }
-case (Rle_dec (u + R_Eta64) 0); intros HAddPos.
+case (Rle_dec (c + R_eta) 0); intros HAddPos.
 {
   apply Ropp_le_contravar in HAddPos.
   rewrite Ropp_0 in HAddPos.
   rewrite <- Rabs_Ropp.
   rewrite Rabs_pos_eq; [|assumption].
   rewrite Ropp_plus_distr.
-  unfold R_Eta64.
+  unfold R_eta.
   simpl (prec + emin)%Z.
   apply Rabs_lt_inv in Hineq.
   unfold R_c1 in Hineq.
-  case (Rle_dec (u) 0); intros Hpos.
+  case (Rle_dec (c) 0); intros Hpos.
   {
     destruct Hineq as [HineqL HineqS].
     apply Ropp_lt_contravar in HineqL.
     rewrite Ropp_involutive in HineqL.
     apply Rlt_le in HineqL.
-    assert (-u + - bpow radix2 (-1074) <= bpow radix2 (-1021) + - bpow radix2 (-1074))%R by lra.
+    assert (-c + - bpow radix2 (-1074) <= bpow radix2 (-1021) + - bpow radix2 (-1074))%R by lra.
     apply Rle_trans with (bpow radix2 (-1021) + - bpow radix2 (-1074))%R...
     rewrite <- Rplus_0_r.
     apply Rplus_le_compat_l.
@@ -326,17 +326,17 @@ rewrite Rabs_pos_eq.
   assumption.
 }
 unfold R_c1 in Hineq.
-unfold R_Eta64.
+unfold R_eta.
 simpl (prec + emin)%Z.
 apply Rabs_lt_inv in Hineq.
 destruct Hineq as [HineqS HineqL].
-case (Rle_dec (u) 0); intros Hpos.
+case (Rle_dec (c) 0); intros Hpos.
 {
   apply Rge_le.
   apply Rge_trans with (bpow radix2 (-1074)); compute; lra.
 }
 apply Rnot_le_gt in Hpos.
-replace (bpow radix2 (-1074)) with (ulp radix2 (FLT_exp emin prec) u).
+replace (bpow radix2 (-1074)) with (ulp radix2 (FLT_exp emin prec) c).
 {
   apply id_p_ulp_le_bpow...
   apply generic_format_FLT...
@@ -346,10 +346,10 @@ simpl (-1074 + prec)%Z.
 now apply Rabs_lt.
 Qed.
 
-Lemma round_subnormal_minus_eta: forall u, format u -> (Rabs u < R_c1)%R ->
-  (round_flt (u - R_Eta64) = u - R_Eta64)%R.
+Lemma round_subnormal_minus_eta: forall c, format c -> (Rabs c < R_c1)%R ->
+  (round_flt (c - R_eta) = c - R_eta)%R.
 Proof with auto with typeclass_instances.
-intros u form Hineq.
+intros c form Hineq.
 apply FLT_format_generic in form...
 destruct form as [uf H1 H2 H3] eqn:H'.
 apply round_generic...
@@ -362,11 +362,11 @@ apply FLT_format_plus_small...
 {
   apply generic_format_opp.
   apply generic_format_FLT.
-  unfold R_Eta64.
+  unfold R_eta.
   apply FLT_format_bpow...
   easy.
 }
-case (Rle_dec (u - R_Eta64) 0); intros HAddPos.
+case (Rle_dec (c - R_eta) 0); intros HAddPos.
 {
   apply Ropp_le_contravar in HAddPos.
   rewrite Ropp_0 in HAddPos.
@@ -374,11 +374,11 @@ case (Rle_dec (u - R_Eta64) 0); intros HAddPos.
   rewrite Rabs_pos_eq; [|assumption].
   rewrite Ropp_plus_distr.
   rewrite Ropp_involutive.
-  unfold R_Eta64.
+  unfold R_eta.
   simpl (prec + emin)%Z.
   apply Rabs_lt_inv in Hineq.
   unfold R_c1 in Hineq.
-  case (Rle_dec (u) 0); intros Hpos.
+  case (Rle_dec (c) 0); intros Hpos.
   {
     destruct Hineq as [HineqL HineqS].
     apply Ropp_lt_contravar in HineqL.
@@ -388,13 +388,13 @@ case (Rle_dec (u - R_Eta64) 0); intros HAddPos.
       rewrite H.
       compute; lra.
     }
-    replace (bpow radix2 (-1074)) with (ulp radix2 (FLT_exp emin prec) (-u)).
-    set (u' := (-u)%R).
+    replace (bpow radix2 (-1074)) with (ulp radix2 (FLT_exp emin prec) (-c)).
+    set (c' := (-c)%R).
     {
       apply id_p_ulp_le_bpow...
       {
         apply Ropp_lt_contravar in H.
-        unfold u'.
+        unfold c'.
         now rewrite Ropp_0 in H.
       }
       apply generic_format_opp.
@@ -416,11 +416,11 @@ rewrite Rabs_pos_eq.
   assumption.
 }
 unfold R_c1 in Hineq.
-unfold R_Eta64.
+unfold R_eta.
 simpl (prec + emin)%Z.
 apply Rabs_lt_inv in Hineq.
 destruct Hineq as [HineqS HineqL].
-case (Rle_dec (u) 0).
+case (Rle_dec (c) 0).
 {
   intro Hpos.
   apply Rge_le.
@@ -428,15 +428,15 @@ case (Rle_dec (u) 0).
 }
 intro Hpos.
 apply Rnot_le_gt in Hpos.
-replace (bpow radix2 (-1074)) with (ulp radix2 (FLT_exp emin prec) u).
+replace (bpow radix2 (-1074)) with (ulp radix2 (FLT_exp emin prec) c).
 {
-  assert (u - ulp_flt u <= u + ulp_flt u)%R.
+  assert (c - ulp_flt c <= c + ulp_flt c)%R.
   {
     apply Rplus_le_compat_l.
-    pose proof ulp_ge_0 radix2 (FLT_exp emin prec) u as ulp_pos.
+    pose proof ulp_ge_0 radix2 (FLT_exp emin prec) c as ulp_pos.
     lra.
   }
-  apply Rle_trans with (u + ulp radix2 (FLT_exp emin prec) u)%R.
+  apply Rle_trans with (c + ulp radix2 (FLT_exp emin prec) c)%R.
   apply H.
   apply id_p_ulp_le_bpow...
   apply generic_format_FLT...
