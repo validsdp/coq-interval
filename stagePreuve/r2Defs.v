@@ -5,107 +5,105 @@
 Require Import Reals Psatz Floats.
 From Flocq Require Import Core Plus_error Mult_error IEEE754.PrimFloat BinarySingleNaN Relative.
 
-Existing Instance Hprec.
-Existing Instance Hmax.
+Local Open Scope R_scope.
 
-Local Open Scope float_scope.
+Section r2Defs.
 
-Definition u := Eval compute in ldexp 1 (-53)%Z.
-Definition R_u := bpow radix2 (-53)%Z.
+(* "We require beta to be even and greater than one" (p. 2) *)
+Variable beta : radix.
+Hypothesis beta_even : Z.even beta = true.
 
-Definition inv_u := Eval compute in ldexp 1 (53)%Z.
-(* u^-1 in paper *)
-Definition R_inv_u := bpow radix2 53%Z.
-
-Definition eta := Eval compute in ldexp 1 (-1074)%Z.
-Definition R_eta := bpow radix2 (-1074)%Z.
-
-Definition succ_u := Eval compute in (u * (1 + (2 * u)))%float.
-Definition R_succ_u := succ radix2 (FLT_exp emin prec) R_u.
-
-Definition c0 := Eval compute in 0.5%float * 1/(u * u) * eta.
-(* R_c0 = 1/2 u^-2 eta in paper *)
-Definition R_c0 := bpow radix2 (-969)%Z.
-
-Definition c1 := Eval compute in (inv_u * eta)%float. (* Borne binade minimale *)
-Definition R_c1 := bpow radix2 (-1021)%Z.
-
-Definition half_c1 := Eval compute in 0.5%float * c1.
-Definition R_half_c1 := bpow radix2 (-1022)%Z.
-
-Definition two_c1 := Eval compute in 2%float * c1.
-Definition R_two_c1 := bpow radix2 (-1020)%Z.
-
+Variables emin prec : Z.
 Context { prec_gt_0_ : Prec_gt_0 prec }.
 
-Notation format := (generic_format radix2 (FLT_exp emin prec)).
-Definition round_flt := (round radix2 (FLT_exp emin prec) ZnearestE).
-Notation ulp_flt := (ulp radix2 (FLT_exp emin prec)).
-Notation cexp := (cexp radix2 (FLT_exp emin prec)).
-Notation pred_flt := (pred radix2 (FLT_exp emin prec)).
-Notation succ_flt := (succ radix2 (FLT_exp emin prec)).
-Notation bpow_2 := (bpow radix2).
-Definition R_ufp (x: R) := bpow_2 (mag radix2 x - 1).
+Notation format := (generic_format beta (FLT_exp emin prec)).
+Notation round := (round beta (FLT_exp emin prec) ZnearestE).
+Notation ulp := (ulp beta (FLT_exp emin prec)).
+Notation cexp := (cexp beta (FLT_exp emin prec)).
+Notation pred := (pred beta (FLT_exp emin prec)).
+Notation succ := (succ beta (FLT_exp emin prec)).
+Notation bpow := (bpow beta).
+
+Definition ufp (x: R) := bpow (mag beta x - 1).
+
+Definition u := / 2 * bpow (1 - prec).
+
+(* u^-1 in paper *)
+Definition inv_u := bpow prec.
+
+Definition eta := bpow emin.
+
+Definition succ_u := succ u.
+
+(* c0 = 1/2 u^-2 eta in paper *)
+Definition c0 := / 2 * / (u * u) * eta.
+Definition c1 := inv_u * eta.
+Definition half_c1 := / 2 * c1.
+Definition two_c1 := 2 * c1.
 
 (* algorithm 1 in paper *)
 Definition B_UP_R (c : R) :=
-  round_flt (c + round_flt(round_flt (R_succ_u * Rabs c) + R_eta)).
+  round (c + round (round  (succ_u * Rabs c) + eta)).
 Definition B_DN_R (c : R) :=
-  round_flt (c - round_flt(round_flt (R_succ_u * Rabs c) + R_eta)).
+  round (c - round (round (succ_u * Rabs c) + eta)).
 
 (* algorithm 2 in paper *)
 Definition C_UP_R (c : R) :=
-(* R_c0 = 1/2 u^-2 eta in paper *)
-(* R_c1 = u^-1 eta in paper *)
-(* inv_u = u^-1 in paper *)
-(* round_flt = fl(.) in paper *)
-let abs_c := Rabs c in
-  if Rlt_bool abs_c R_c0 then
-    if Rlt_bool abs_c R_c1 then
-      round_flt (c + R_eta)%R (* Else if *)
+  (* c0 = 1/2 u^-2 eta in paper *)
+  (* c1 = u^-1 eta in paper *)
+  (* inv_u = u^-1 in paper *)
+  (* round = fl(.) in paper *)
+  let abs_c := Rabs c in
+  if Rlt_bool abs_c c0 then
+    if Rlt_bool abs_c c1 then
+      round (c + eta)%R (* Else if *)
     else
-      let C := round_flt (R_inv_u * c)%R in 
-      round_flt (R_u * round_flt (C + round_flt (R_succ_u * Rabs C)))%R (* Scaling *)
+      let C := round (inv_u * c)%R in
+      round (u * round (C + round (succ_u * Rabs C)))%R (* Scaling *)
   else
-    round_flt (c + round_flt (R_succ_u * abs_c))%R. (* Normal *)
+    round (c + round (succ_u * abs_c))%R. (* Normal *)
 
 Definition C_DN_R (c : R) :=
-let abs_c := Rabs c in
-  if Rlt_bool abs_c R_c0 then
-    if Rlt_bool abs_c R_c1 then
-      round_flt (c - R_eta)%R (* Else if *)
+  let abs_c := Rabs c in
+  if Rlt_bool abs_c c0 then
+    if Rlt_bool abs_c c1 then
+      round (c - eta)%R (* Else if *)
     else
-      let C := round_flt (R_inv_u * c)%R in 
-      round_flt (R_u * round_flt (C - round_flt (R_succ_u * Rabs C)))%R (* Scaling *)
+      let C := round (inv_u * c)%R in
+      round (u * round (C - round (succ_u * Rabs C)))%R (* Scaling *)
   else
-    round_flt (c - round_flt (R_succ_u * abs_c))%R. (* Normal *)
+    round (c - round (succ_u * abs_c))%R. (* Normal *)
 
 Lemma B_UP_R_opp: forall u, format u -> (u <> 0)%R ->
-(B_UP_R (-u) = - B_DN_R (u))%R.
+  (B_UP_R (-u) = - B_DN_R (u))%R.
 Proof with auto with typeclass_instances.
 intros u form Hnot_zero.
 unfold B_UP_R.
 unfold B_DN_R.
-unfold round_flt.
+unfold round.
+Admitted. (*
 rewrite <- round_NE_opp.
 f_equal.
 rewrite Ropp_minus_distr.
 rewrite Rabs_Ropp.
 lra.
 Qed.
+*)
 
 Lemma B_DN_R_opp: forall u, format u -> (u <> 0)%R ->
-(B_DN_R (-u) = - B_UP_R (u))%R.
+  (B_DN_R (-u) = - B_UP_R (u))%R.
 Proof with auto with typeclass_instances.
 intros u form Hnot_zero.
 unfold B_UP_R.
 unfold B_DN_R.
-unfold round_flt.
+unfold round.
+Admitted. (*
 rewrite <- round_NE_opp.
 f_equal.
 rewrite Ropp_plus_distr.
 rewrite Rabs_Ropp.
 lra.
 Qed.
+*)
 
-(********************************************************************)
+End r2Defs.
